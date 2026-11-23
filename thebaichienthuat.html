@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cụm Quân & Lá Số 0 (Vua) - 1 Lá Số 0 Duy Nhất</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      font-family: 'Inter', sans-serif;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #0f2922 0%, #090f15 55%, #05080c 100%);
+      color: #f1f5f9;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(52, 211, 153, 0.35);
+      border-radius: 9999px;
+    }
+
+    .game-card {
+      transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.16s ease, border-color 0.16s ease;
+      user-select: none;
+    }
+    .game-card:hover:not(:disabled) {
+      transform: translateY(-4px);
+    }
+    .game-card.selected {
+      transform: translateY(-12px) scale(1.04);
+      box-shadow: 0 12px 24px -4px rgba(16, 185, 129, 0.45);
+      border-color: #34d399;
+    }
+
+    .king-card {
+      background: linear-gradient(145deg, #451a03 0%, #78350f 45%, #b45309 100%);
+      border-color: #fbbf24 !important;
+      box-shadow: 0 0 18px rgba(251, 191, 36, 0.42);
+    }
+    .power-card {
+      background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%);
+      border-color: #818cf8;
+    }
+    .high-card {
+      background: linear-gradient(145deg, #064e3b 0%, #065f46 100%);
+      border-color: #34d399;
+    }
+    .normal-card {
+      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+      border-color: #475569;
+    }
+
+    .card-back {
+      background-color: #0f172a;
+      background-image: radial-gradient(#10b981 1px, transparent 1px), radial-gradient(#059669 1px, #0f172a 1px);
+      background-size: 14px 14px;
+      background-position: 0 0, 7px 7px;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.92) translateY(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop {
+      animation: popIn 0.25s ease-out forwards;
+    }
+
+    @keyframes redAlertFlash {
+      0%, 100% {
+        box-shadow: inset 0 0 0 2px rgba(244, 63, 94, 0.55), 0 0 24px rgba(225, 29, 72, 0.3);
+        border-color: rgba(251, 113, 133, 0.9);
+      }
+      50% {
+        box-shadow: inset 0 0 34px rgba(244, 63, 94, 0.42), 0 0 40px rgba(244, 63, 94, 0.65);
+        border-color: rgba(254, 205, 211, 1);
+      }
+    }
+    .king-red-alert {
+      animation: redAlertFlash 1.05s infinite;
+      background: linear-gradient(145deg, rgba(69, 10, 22, 0.92) 0%, rgba(15, 23, 42, 0.96) 65%);
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-emerald-500 selection:text-slate-950">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="sticky top-0 z-30 border-b border-emerald-900/50 bg-slate-950/85 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
+      <button type="button" onclick="returnToMainMenu()" class="flex items-center gap-2.5 text-left group cursor-pointer">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-lg flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition">
+          0
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white leading-tight">
+            CỤM QUÂN & LÁ <span class="text-amber-400">SỐ 0 (VUA)</span>
+            <span class="text-[11px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 ml-1">1 LÁ SỐ 0 DUY NHẤT</span>
+          </h1>
+          <p id="header-mode-subtitle" class="text-[11px] text-emerald-400/90 font-medium">Ai lấy số 0 trước thì bên kia không có • Vào trận hiện lá 0 quyết định</p>
+        </div>
+      </button>
+
+      <div class="flex items-center gap-1.5 sm:gap-2.5">
+        <div id="header-phase-badge" class="hidden md:inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/90 border border-emerald-700/60 text-emerald-300">
+          Menu Chính
+        </div>
+
+        <button type="button" id="btn-sound-toggle" onclick="toggleMute()" title="Bật/Tắt âm thanh" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-emerald-300 transition cursor-pointer">
+          🔊 Âm thanh
+        </button>
+
+        <button type="button" onclick="toggleRulesModal(true)" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 transition cursor-pointer">
+          Luật chơi
+        </button>
+
+        <button type="button" id="btn-header-restart" onclick="restartCurrentMode()" class="hidden px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-slate-950 transition shadow-md shadow-emerald-600/20 cursor-pointer">
+          Ván mới
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none w-[92%] max-w-md flex flex-col items-center gap-2"></div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+
+    <!-- ========================================================= -->
+    <!-- SCREEN 0: MAIN MENU & STATS DASHBOARD                     -->
+    <!-- ========================================================= -->
+    <section id="screen-menu" class="space-y-6 animate-pop">
+      <div class="rounded-3xl bg-gradient-to-br from-slate-900/95 via-emerald-950/35 to-slate-900/95 border border-emerald-800/50 p-5 sm:p-8 shadow-2xl">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div class="space-y-2.5 max-w-2xl">
+            <div class="inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/15 border border-amber-400/40 text-amber-300">
+              <span>❓ 3 CÂU = 3 GÓI (10 LÁ/GÓI)</span>
+              <span>•</span>
+              <span>👑 1 LÁ SỐ 0 DUY NHẤT (LẤY TRƯỚC = BÊN KIA KHÔNG CÓ)</span>
+            </div>
+            <h2 class="text-2xl sm:text-4xl font-black tracking-tight text-white">
+              Cụm Quân & Lá <span class="text-amber-400">Số 0</span> — <span class="text-emerald-400">Màn Quyết Định</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Mỗi ván chỉ có <strong>1 lá số 0 duy nhất</strong>: nếu bạn lấy lá số <strong>0</strong> ở câu 3 trước thì bên <strong>Máy</strong> sẽ <strong>không có lá số 0</strong>. Cụm giữ lá <strong>0</strong> được báo trước, và khi bước vào đấu trận sẽ <strong>hiện rõ lá số 0</strong> để báo hiệu đây là <strong>màn quyết định</strong>.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 shrink-0 bg-slate-950/80 border border-slate-800 rounded-2xl p-3 sm:p-4">
+            <div class="text-center px-2">
+              <div class="text-[11px] text-emerald-400 font-medium">Thắng</div>
+              <div id="stat-wins" class="text-xl sm:text-2xl font-black text-emerald-400 mt-0.5">0</div>
+            </div>
+            <div class="text-center px-2 border-l border-slate-800">
+              <div class="text-[11px] text-rose-400 font-medium">Thua</div>
+              <div id="stat-losses" class="text-xl sm:text-2xl font-black text-rose-400 mt-0.5">0</div>
+            </div>
+            <div class="text-center px-2 border-l border-slate-800">
+              <div class="text-[11px] text-amber-400 font-medium">Hạ Số 0</div>
+              <div id="stat-kings-slain" class="text-xl sm:text-2xl font-black text-amber-400 mt-0.5">0</div>
+            </div>
+            <div class="text-center px-2 border-l border-slate-800">
+              <div class="text-[11px] text-indigo-300 font-medium">Chuỗi</div>
+              <div id="stat-win-streak" class="text-xl sm:text-2xl font-black text-indigo-300 mt-0.5">0</div>
+            </div>
+            <div class="text-center px-2 border-l border-slate-800">
+              <div class="text-[11px] text-teal-300 font-medium">Bạn giữ</div>
+              <div id="stat-kept-cards" class="text-xl sm:text-2xl font-black text-teal-300 mt-0.5">0</div>
+            </div>
+            <div class="text-center px-2 border-l border-slate-800">
+              <div class="text-[11px] text-orange-300 font-medium">Máy giữ</div>
+              <div id="stat-bot-kept-cards" class="text-xl sm:text-2xl font-black text-orange-300 mt-0.5">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODE SELECTION -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-8 rounded-2xl bg-slate-900/85 border border-slate-800 p-4 sm:p-5 space-y-4 shadow-xl">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base sm:text-lg font-extrabold text-white">Đấu với Máy (3 Mức Độ)</h3>
+              <p class="text-xs text-slate-400">Bạn lấy số 0 trước thì Máy không có số 0 • Vào trận hiện lá 0 quyết định</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              1 Người chơi
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="rounded-2xl bg-slate-950/80 border border-slate-800 hover:border-emerald-500/60 p-4 flex flex-col justify-between transition">
+              <div class="space-y-2">
+                <div class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300">
+                  MỨC 1: DỄ
+                </div>
+                <h4 class="text-base font-extrabold text-white">Dễ</h4>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Máy dàn cụm ngẫu nhiên hơn, đánh lá cởi mở; nếu bạn đã lấy lá số 0 trước thì Máy không có lá số 0.
+                </p>
+              </div>
+              <button type="button" onclick="launchGame('ai', 'easy')" class="mt-4 w-full py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer">
+                Chơi mức Dễ →
+              </button>
+            </div>
+
+            <div class="rounded-2xl bg-slate-950/80 border border-indigo-500/40 hover:border-indigo-400 p-4 flex flex-col justify-between transition">
+              <div class="space-y-2">
+                <div class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-500/20 text-indigo-300">
+                  MỨC 2: CHIẾN THUẬT
+                </div>
+                <h4 class="text-base font-extrabold text-white">Chiến thuật</h4>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Máy gia cố cụm giữ số 0 (nếu Máy có) bằng quân cao, thăm dò bằng lá nhỏ và giữ quân mạnh chặn đòn hợp lý.
+                </p>
+              </div>
+              <button type="button" onclick="launchGame('ai', 'tactical')" class="mt-4 w-full py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-indigo-500 hover:bg-indigo-400 text-white transition cursor-pointer">
+                Chơi mức Chiến thuật →
+              </button>
+            </div>
+
+            <div class="rounded-2xl bg-slate-950/80 border border-amber-500/40 hover:border-amber-400 p-4 flex flex-col justify-between transition">
+              <div class="space-y-2">
+                <div class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-500/20 text-amber-300">
+                  MỨC 3: BẬC THẦY SĂN VUA
+                </div>
+                <h4 class="text-base font-extrabold text-white">Bậc thầy săn Vua</h4>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                  Máy bảo vệ lá số 0 chặt chẽ, tính toán từng lá 1-chọi-1 và canh ép nhịp khi bước vào màn quyết định.
+                </p>
+              </div>
+              <button type="button" onclick="launchGame('ai', 'master')" class="mt-4 w-full py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-400 hover:bg-amber-300 text-slate-950 transition cursor-pointer">
+                Đấu Bậc thầy →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800 p-4 sm:p-5 flex flex-col justify-between shadow-xl">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-400/15 text-amber-300 border border-amber-400/30">
+                2 Người / Chung Máy
+              </span>
+              <span class="text-xs text-slate-400">Pass & Play</span>
+            </div>
+            <h3 class="text-lg font-extrabold text-white">Đấu 2 Người Trên Cùng Máy</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Mỗi ván chỉ có 1 lá số 0 duy nhất: bên 1 lấy trước thì bên 2 không có lá số 0; vào trận hiện lá 0 là màn quyết định.
+            </p>
+          </div>
+
+          <div class="space-y-2.5 pt-5">
+            <button type="button" onclick="launchGame('pvp', 'tactical')" class="w-full py-3 rounded-xl text-sm font-extrabold bg-gradient-to-r from-emerald-400 to-teal-300 hover:from-emerald-300 hover:to-teal-200 text-slate-950 transition shadow-lg shadow-emerald-500/20 cursor-pointer">
+              Bắt đầu đấu 2 Người →
+            </button>
+            <button type="button" onclick="resetStoredStatsAndKept()" class="w-full py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-rose-950/60 border border-slate-800 hover:border-rose-700/60 text-slate-400 hover:text-rose-300 transition cursor-pointer">
+              Đặt lại thành tích & quân giữ của 2 bên
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- SCREEN 0.5: 3 QUESTIONS -> 3 PACKS x 10 + UNIQUE CARD 0    -->
+    <!-- ========================================================= -->
+    <section id="phase-challenge" class="hidden space-y-5 animate-pop">
+      <div class="rounded-2xl bg-slate-900/90 border border-emerald-800/60 p-4 sm:p-6 shadow-2xl space-y-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div class="space-y-1">
+            <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-400/15 text-amber-300 border border-amber-400/40">
+              ❓ 3 CÂU = 3 GÓI (10 LÁ/GÓI) • 1 LÁ SỐ 0 DUY NHẤT
+            </div>
+            <h2 id="challenge-player-heading" class="text-xl sm:text-2xl font-black text-white">
+              Trả lời 3 câu hỏi để nhận 3 gói 10 lá cho Bên 1
+            </h2>
+            <p id="challenge-king-rule-sub" class="text-xs sm:text-sm text-slate-400">
+              Bộ nguồn đã <strong>trừ 2 lá 3, 2 lá 4, 2 lá 5, 2 lá 6, 2 lá 7</strong>. Đúng đủ 3 câu nhận 3 gói 10 lá; nếu bạn lấy Lá số <strong>0</strong> trước thì bên kia sẽ <strong>không có Lá số 0</strong>.
+            </p>
+          </div>
+
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-right shrink-0">
+            <div class="text-[11px] text-slate-400 font-semibold">Gói & Lá 0 nhận được</div>
+            <div class="text-xl font-black text-emerald-400">
+              <span id="challenge-collected-count">0</span> <span class="text-xs font-medium text-slate-400">lá trong ván</span>
+            </div>
+            <div class="text-[11px] text-amber-300 font-bold mt-0.5" id="challenge-pack-status">Gói: 0/3 • Lá 0: Đang chờ</div>
+            <div class="w-44 h-2 rounded-full bg-slate-800 overflow-hidden mt-1.5 ml-auto">
+              <div id="challenge-progress-bar" class="h-full bg-gradient-to-r from-emerald-400 to-amber-400 transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="challenge-card-box" class="rounded-2xl bg-slate-950/90 border border-indigo-500/40 p-5 sm:p-6 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span id="challenge-type-badge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+              Câu hỏi 1 / 3
+            </span>
+            <span id="challenge-reward-badge" class="text-xs font-bold text-amber-300">
+              Phần thưởng: +10 lá ngẫu nhiên
+            </span>
+          </div>
+
+          <div id="challenge-question-text" class="text-base sm:text-lg font-extrabold text-white leading-snug">
+            Đang tải câu hỏi...
+          </div>
+          <p id="challenge-hint-text" class="text-xs text-slate-400"></p>
+
+          <div id="challenge-options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1"></div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Bài đã nhận trong ván (<span id="challenge-pool-mini-count">0</span> lá)
+            </span>
+            <button type="button" id="btn-go-setup-from-challenge" onclick="proceedToSetupFromChallenge()" disabled class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 transition shadow-lg shadow-emerald-500/20 cursor-pointer disabled:cursor-not-allowed">
+              Hoàn tất 3 gói — Sang bước giữ & xếp cụm →
+            </button>
+          </div>
+          <div id="challenge-collected-preview" class="flex flex-wrap gap-1.5 min-h-[54px] p-3 rounded-xl bg-slate-950/70 border border-slate-800/80"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- SCREEN 1: HOLD WINDOW + CLUSTER SETUP (REPORTS CARD 0)    -->
+    <!-- ========================================================= -->
+    <section id="phase-setup" class="hidden space-y-5 animate-pop">
+      <div class="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xl">
+        <div class="space-y-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span id="setup-step-tag" class="text-xs font-bold uppercase tracking-wider text-amber-400">
+              Giai đoạn giữ quân & xếp cụm
+            </span>
+            <span id="hold-timer-badge" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-400/20 border border-amber-400/50 text-amber-300">
+              ⏳ Giữ quân: 20s
+            </span>
+          </div>
+          <h2 id="setup-player-heading" class="text-lg sm:text-xl font-bold text-white">
+            Xếp quân vào 5 cụm
+          </h2>
+          <p id="setup-king-status-desc" class="text-xs sm:text-sm text-slate-400 max-w-2xl">
+            Cụm giữ lá <strong>0</strong> (nếu có) sẽ được báo trước. Khi bước vào đấu trận, lá số <strong>0</strong> hiện rõ để báo hiệu đây là <strong>màn quyết định</strong>!
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button type="button" id="btn-supplement-kept" onclick="supplementKeptCardsToPool()" class="hidden px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-teal-500 hover:bg-teal-400 text-slate-950 transition shadow-lg shadow-teal-500/20 cursor-pointer">
+            + Nạp quân đang giữ (<span id="kept-supplement-count">0</span>)
+          </button>
+          <button type="button" onclick="autoArrangeSmart()" class="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-lg shadow-indigo-600/20 cursor-pointer">
+            Xếp thông minh
+          </button>
+          <button type="button" onclick="autoArrangeRandom()" class="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition cursor-pointer">
+            Xếp ngẫu nhiên
+          </button>
+          <button type="button" onclick="clearAllClusters()" class="px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800/80 hover:bg-rose-950/70 border border-slate-700 hover:border-rose-700 text-slate-300 hover:text-rose-300 transition cursor-pointer">
+            Xóa hết
+          </button>
+          <button type="button" id="btn-start-battle" onclick="confirmSetupDone()" disabled class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 hover:bg-emerald-400 text-slate-950 transition shadow-lg shadow-emerald-500/25 cursor-pointer disabled:cursor-not-allowed">
+            Xác nhận cụm & đánh →
+          </button>
+        </div>
+      </div>
+
+      <div id="cluster-swap-bar" class="hidden rounded-2xl bg-indigo-950/55 border border-indigo-500/50 p-3 flex flex-wrap items-center justify-between gap-2.5 animate-pop">
+        <div class="text-xs sm:text-sm text-indigo-200 font-semibold" id="swap-status-text">
+          Đang chọn lá để chuyển/đổi cụm...
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="movePickedClusterCardToActive()" class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer">
+            Chuyển/Đổi sang cụm đang chọn
+          </button>
+          <button type="button" onclick="cancelPickedClusterCard()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer">
+            Hủy chọn lá
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" id="setup-clusters-grid"></div>
+
+      <div class="rounded-2xl bg-slate-900/85 border border-slate-800 p-4 sm:p-5 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm sm:text-base font-bold text-white">Kho bài chưa xếp</h3>
+            <span id="unassigned-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+              0 lá còn lại
+            </span>
+          </div>
+          <div class="text-xs text-slate-400">
+            Đang chọn nạp vào: <strong id="active-cluster-label" class="text-emerald-400 font-bold">Cụm 1</strong>
+          </div>
+        </div>
+
+        <div id="unassigned-cards-pool" class="flex flex-wrap gap-2 min-h-[84px] p-3 rounded-xl bg-slate-950/70 border border-slate-800/80"></div>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- SCREEN 2: PASS & PLAY CURTAIN                             -->
+    <!-- ========================================================= -->
+    <section id="screen-pass-curtain" class="hidden py-8 animate-pop">
+      <div class="max-w-xl mx-auto rounded-3xl bg-slate-900/95 border border-amber-500/40 p-6 sm:p-8 text-center space-y-5 shadow-2xl">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-3xl">
+          🛡️
+        </div>
+        <div class="space-y-1.5">
+          <div class="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-400/15 text-amber-300">
+            Bảo mật bài trên cùng máy
+          </div>
+          <h2 id="curtain-title" class="text-xl sm:text-2xl font-black text-white">Chuyển máy</h2>
+          <p id="curtain-desc" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Hãy chuyển thiết bị cho người chơi tiếp theo trước khi mở khóa.
+          </p>
+        </div>
+        <button type="button" onclick="dismissPassCurtain()" class="w-full sm:w-auto px-7 py-3 rounded-xl text-sm font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shadow-lg shadow-emerald-500/25 cursor-pointer">
+          Tôi đã sẵn sàng — Mở bài
+        </button>
+      </div>
+    </section>
+
+    <!-- ========================================================= -->
+    <!-- SCREEN 3: BATTLE ARENA (PREVIEW 0 + SHOW 0 WHEN IN CLASH) -->
+    <!-- ========================================================= -->
+    <section id="phase-battle" class="hidden space-y-4 animate-pop">
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <div class="lg:col-span-8 rounded-2xl bg-slate-900/85 border border-slate-800 p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+          <div class="flex items-center gap-3">
+            <div id="p1-avatar-badge" class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-xs sm:text-sm">
+              BÊN 1
+            </div>
+            <div>
+              <div id="p1-name-label" class="text-xs text-slate-400">Quân đã lấy về của Bên 1</div>
+              <div class="text-lg font-extrabold text-emerald-400"><span id="player-loot-count">0</span> <span class="text-xs font-medium text-slate-400">lá đã lấy</span></div>
+            </div>
+          </div>
+
+          <div class="px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-center">
+            <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Quyền tấn công hiện tại</div>
+            <div id="attacker-role-text" class="text-sm sm:text-base font-extrabold text-amber-400 mt-0.5">
+              BÊN 1 ĐANG GIỮ QUYỀN CÔNG
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <div id="p2-name-label" class="text-xs text-slate-400">Quân đã lấy về của Bên 2</div>
+              <div class="text-lg font-extrabold text-rose-400"><span id="bot-loot-count">0</span> <span class="text-xs font-medium text-slate-400">lá đã lấy</span></div>
+            </div>
+            <div id="p2-avatar-badge" class="w-10 h-10 rounded-xl bg-rose-500/15 border border-rose-500/40 flex items-center justify-center text-rose-400 font-black text-xs sm:text-sm">
+              BÊN 2
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 rounded-2xl bg-slate-900/85 border border-slate-800 p-3.5 flex flex-col justify-between shadow-lg">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Nhật ký chiến trận</span>
+            <span id="round-counter" class="text-xs font-semibold text-emerald-400">Lượt #1</span>
+          </div>
+          <div id="battle-log-box" class="text-xs text-slate-300 space-y-1 max-h-16 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+
+      <!-- SUB-VIEW 3A: CLUSTER SELECTION (PRE-ANNOUNCES CARD 0) -->
+      <div id="subview-cluster-select" class="space-y-4">
+        <div class="rounded-2xl bg-slate-900/75 border border-slate-800 p-4 shadow-xl">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <h3 id="top-clusters-heading" class="text-sm font-bold text-slate-200">5 Cụm Úp Của Bên 2</h3>
+            </div>
+            <span class="text-xs text-slate-400" id="bot-select-hint">Đè lá nào lấy về lá đó ngay • Có lá 0 là màn quyết định</span>
+          </div>
+          <div id="arena-bot-clusters" class="grid grid-cols-2 sm:grid-cols-5 gap-3"></div>
+        </div>
+
+        <div id="select-prompt-bar" class="rounded-2xl bg-gradient-to-r from-emerald-950/90 via-slate-900 to-emerald-950/90 border border-emerald-700/50 p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="flex items-center gap-3 text-center sm:text-left">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 font-bold shrink-0">
+              ⚔️
+            </div>
+            <div>
+              <div id="select-instruction-title" class="text-sm font-bold text-white">Chọn cụm để xuất quân</div>
+              <div id="select-instruction-sub" class="text-xs text-amber-300/90">Cụm có báo trước số 0 của bạn hiển thị rõ—khi vào trận sẽ hiện lá 0 báo hiệu màn quyết định!</div>
+            </div>
+          </div>
+          <button type="button" id="btn-confirm-clash" onclick="confirmClusterClash()" disabled class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-sm font-extrabold bg-amber-400 disabled:bg-slate-800 disabled:text-slate-500 hover:bg-amber-300 text-slate-950 transition shadow-lg shadow-amber-500/20 cursor-pointer disabled:cursor-not-allowed">
+            Khai chiến cụm đã chọn!
+          </button>
+        </div>
+
+        <div class="rounded-2xl bg-slate-900/75 border border-slate-800 p-4 shadow-xl">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+              <h3 id="bottom-clusters-heading" class="text-sm font-bold text-slate-200">5 Cụm Quân Của Bên 1 (Báo trước cụm có số 0)</h3>
+            </div>
+            <span class="text-xs text-amber-400 font-bold">🔔 Báo trước số 0 • Vào trận hiện lá 0 là màn quyết định</span>
+          </div>
+          <div id="arena-player-clusters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+        </div>
+      </div>
+
+      <!-- SUB-VIEW 3B: 1-CARD-PER-TURN COMBAT ARENA (SHOWS CARD 0 UPON ENTRY) -->
+      <div id="subview-clash-combat" class="hidden space-y-4 animate-pop">
+        <div id="clash-arena-panel" class="rounded-2xl bg-slate-900/90 border border-emerald-800/60 p-4 sm:p-5 shadow-2xl space-y-4 transition">
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <span class="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                ĐẤU TỪNG LÁ • ĂN LÁ NÀO LẤY LÁ ĐÓ
+              </span>
+              <span id="clash-matchup-title" class="text-sm sm:text-base font-bold text-white">
+                Cụm 1 vs Cụm 3
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+              <div id="turn-timer-badge" class="px-3.5 py-1 rounded-xl text-xs sm:text-sm font-black bg-emerald-950 border border-emerald-500/60 text-emerald-300 flex items-center gap-1.5">
+                <span>⏱️</span>
+                <span id="turn-timer-label">Lượt: 15s</span>
+              </div>
+              <div id="clash-king-alert" class="hidden px-3.5 py-1 rounded-full text-xs font-black bg-rose-600/30 border border-rose-400 text-rose-100 animate-pulse">
+                🚨 MÀN QUYẾT ĐỊNH — LÁ SỐ 0 ĐÃ HIỆN!
+              </div>
+            </div>
+          </div>
+
+          <div class="w-full h-2 rounded-full bg-slate-950 border border-slate-800 overflow-hidden">
+            <div id="turn-timer-bar" class="h-full bg-emerald-400 transition-all duration-200" style="width: 100%"></div>
+          </div>
+
+          <div class="rounded-xl bg-slate-950/80 border border-slate-800 p-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div id="clash-top-label" class="text-xs font-bold text-rose-400 uppercase">Cụm của Bên 2</div>
+              <div id="bot-clash-cards-visual" class="flex items-center -space-x-2"></div>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+              <span id="bot-king-shield-badge" class="hidden px-2.5 py-1 rounded-lg bg-rose-950/90 border border-amber-400 text-amber-200 font-black">
+                👑 LÁ SỐ 0 (MÀN QUYẾT ĐỊNH) Ở BÊN 2!
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 font-semibold">
+                Còn lại: <strong id="bot-clash-remaining" class="text-white">0</strong> lá
+              </span>
+            </div>
+          </div>
+
+          <div id="center-battle-table" class="relative rounded-2xl bg-gradient-to-b from-emerald-950/50 to-slate-950/90 border border-emerald-800/50 p-5 sm:p-7 min-h-[175px] flex flex-col items-center justify-center text-center">
+            <div id="table-turn-banner" class="mb-3 px-3.5 py-1 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              Mở vòng đánh mới (1 lá • 15 giây)
+            </div>
+
+            <div id="table-played-cards" class="flex flex-wrap items-center justify-center gap-2.5 min-h-[76px]">
+              <span class="text-xs sm:text-sm text-slate-400 italic">Chưa có lá nào trên bàn. Đánh 1 lá mạnh hơn sẽ lấy lá bị đè về kho giữ ngay!</span>
+            </div>
+
+            <div id="table-combo-label" class="mt-2.5 text-xs font-semibold text-slate-400"></div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span id="clash-bottom-label" class="text-xs sm:text-sm font-bold text-emerald-400">Bài trên tay của Bên 1</span>
+                <span id="player-clash-remaining" class="px-2 py-0.5 rounded-md text-xs font-bold bg-slate-800 text-slate-300">0 lá</span>
+              </div>
+              <div id="player-king-status-note" class="hidden text-xs font-black text-amber-300">
+                👑 LÁ SỐ 0 (MÀN QUYẾT ĐỊNH) Ở BÊN 1!
+              </div>
+            </div>
+
+            <div id="player-clash-hand" class="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 p-3 sm:p-4 rounded-2xl bg-slate-950/85 border border-slate-800 min-h-[104px]"></div>
+
+            <div class="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+              <button type="button" id="btn-play-cards" onclick="playerPlaySelected()" class="px-6 py-3 rounded-xl text-sm font-extrabold bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 transition shadow-lg shadow-emerald-500/25 cursor-pointer disabled:cursor-not-allowed">
+                Đánh 1 lá đã chọn
+              </button>
+              <button type="button" id="btn-hint-move" onclick="playerUseHint()" class="px-4 py-3 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600/90 hover:bg-indigo-500 text-white transition cursor-pointer">
+                Gợi ý 1 lá
+              </button>
+              <button type="button" id="btn-pass-turn" onclick="playerPassTurn()" class="px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-slate-800 hover:bg-slate-700 disabled:opacity-40 border border-slate-700 text-slate-200 transition cursor-pointer disabled:cursor-not-allowed">
+                Bỏ lượt
+              </button>
+              <button type="button" onclick="clearClashSelection()" class="px-3.5 py-3 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 transition cursor-pointer">
+                Bỏ chọn
+              </button>
+            </div>
+            <p class="text-[11px] text-center text-slate-400">
+              Đánh 1 lá có sức mạnh cao hơn lá trên bàn sẽ <strong>lấy ngay lá bị đè về kho giữ</strong>. Không dùng Lá <strong>0</strong> để đánh. Hết <strong>15 giây</strong> không đánh là thua nguyên trận!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: RULES GUIDE -->
+  <div id="rules-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm items-center justify-center p-4">
+    <div class="max-w-lg w-full rounded-3xl bg-slate-900 border border-emerald-700/60 p-6 space-y-4 shadow-2xl animate-pop">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-extrabold text-white">Luật Chơi — Cụm Quân & Lá Số 0</h3>
+        <button type="button" onclick="toggleRulesModal(false)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold cursor-pointer">✕</button>
+      </div>
+      <div class="space-y-2.5 text-xs sm:text-sm text-slate-300 leading-relaxed max-h-[65vh] overflow-y-auto pr-1">
+        <p><strong class="text-emerald-400">1. Trừ 2 lá từ 3 đến 7:</strong> Trả lời <strong>3 câu hỏi</strong> mở <strong>3 gói × 10 lá ngẫu nhiên</strong> (30 lá).</p>
+        <p><strong class="text-amber-400">2. Chỉ có 1 lá số 0 duy nhất:</strong> Ai lấy lá số <strong>0</strong> trước thì bên kia không có. Khi cụm giữ lá <strong>0</strong> bước vào đấu trận, lá số <strong>0</strong> hiện rõ để báo hiệu đây là <strong>màn quyết định</strong>.</p>
+        <p><strong class="text-teal-300">3. Ăn cái nào lấy về cái đó ngay:</strong> Đè được lá nào trên bàn thì lấy ngay lá bị đè đó về kho giữ.</p>
+        <p><strong class="text-emerald-400">4. 15 giây/lượt:</strong> Hết 15s không đánh thua nguyên trận; bên giữ Lá 0 thắng cụm thắng nguyên trận, thua cụm thua nguyên trận.</p>
+      </div>
+      <button type="button" onclick="toggleRulesModal(false)" class="w-full py-2.5 rounded-xl text-sm font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer">
+        Đã hiểu — Tiếp tục
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: END OF MATCH SUMMARY -->
+  <div id="endgame-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-sm items-center justify-center p-4">
+    <div class="max-w-md w-full rounded-3xl bg-slate-900 border border-amber-400/50 p-6 text-center space-y-4 shadow-2xl animate-pop">
+      <div id="endgame-icon" class="w-16 h-16 mx-auto rounded-2xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-3xl">
+        0
+      </div>
+      <h3 id="endgame-title" class="text-2xl font-black text-white">Kết thúc trận đấu</h3>
+      <p id="endgame-reason" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p>
+      <div id="endgame-kept-banner" class="text-xs font-bold text-teal-300 bg-teal-950/50 border border-teal-700/50 rounded-xl px-3 py-2"></div>
+      <div class="grid grid-cols-2 gap-3 bg-slate-950/80 border border-slate-800 rounded-2xl p-3 text-xs">
+        <div>
+          <div id="end-p1-label" class="text-slate-400">Quân đã lấy của Bên 1</div>
+          <div id="end-p1-loot" class="text-lg font-black text-emerald-400 mt-0.5">0 lá</div>
+        </div>
+        <div class="border-l border-slate-800">
+          <div id="end-p2-label" class="text-slate-400">Quân đã lấy của Bên 2</div>
+          <div id="end-p2-loot" class="text-lg font-black text-rose-400 mt-0.5">0 lá</div>
+        </div>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+        <button type="button" onclick="closeEndgameAndRestart()" class="flex-1 py-3 rounded-xl text-sm font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer">
+          Chơi ván mới
+        </button>
+        <button type="button" onclick="closeEndgameToMenu()" class="flex-1 py-3 rounded-xl text-sm font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition cursor-pointer">
+          Về Menu chính
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const RANK_META = [
+      { label: '3', power: 3, copies: 4 },
+      { label: '4', power: 4, copies: 4 },
+      { label: '5', power: 5, copies: 4 },
+      { label: '6', power: 6, copies: 4 },
+      { label: '7', power: 7, copies: 4 },
+      { label: '8', power: 8, copies: 4 },
+      { label: '9', power: 9, copies: 4 },
+      { label: '10', power: 10, copies: 4 },
+      { label: 'J', power: 11, copies: 4 },
+      { label: 'Q', power: 12, copies: 4 },
+      { label: 'K', power: 13, copies: 4 },
+      { label: 'A', power: 14, copies: 3 },
+      { label: '2', power: 15, copies: 2 }
+    ];
+
+    const PACK_SIZE = 10;
+    const TOTAL_QUESTIONS = 3;
+    const HOLD_WINDOW_SECONDS = 20;
+    const TURN_TIME_LIMIT = 15;
+
+    const STATS_STORAGE_KEY = 'cum_quan_vua_0_stats_v7';
+    const KEPT_STORAGE_KEY = 'cum_quan_vua_0_kept_v7';
+    const BOT_KEPT_STORAGE_KEY = 'cum_quan_vua_0_bot_kept_v7';
+
+    let stats = loadStats();
+    let keptCardsPool = loadKeptCards(KEPT_STORAGE_KEY);
+    let botKeptCardsPool = loadKeptCards(BOT_KEPT_STORAGE_KEY);
+    let soundMuted = false;
+    let audioCtx = null;
+
+    // Locked to 1 unique card '0' per match: whoever claims it first gets it; the other side gets NO card '0'.
+    const SINGLE_KING_IN_MATCH = true;
+    let kingClaimedBySide = null; // 'p1' | 'p2' | null
+
+    let gameMode = 'ai';
+    let aiDifficulty = 'tactical';
+    let currentScreen = 'menu';
+
+    let normalPoolQueue = [];
+    let kingCardItem = null;
+    let challengeCollectedCards = [];
+    let challengeTargetSide = 'p1';
+    let answeredQuestionsCount = 0;
+    let currentQuestionData = null;
+
+    let setupTargetSide = 'p1';
+    let activeClusterIdx = 0;
+    let pickedClusterCard = null;
+    let p1CollectedDeck = [];
+    let p2CollectedDeck = [];
+
+    let holdTimeLeft = HOLD_WINDOW_SECONDS;
+    let holdIntervalId = null;
+
+    let pendingCurtainCallback = null;
+
+    let p1Clusters = [];
+    let p2Clusters = [];
+    let p1Loot = 0;
+    let p2Loot = 0;
+    let attackerSide = 'p1';
+    let roundNumber = 1;
+
+    let clashState = null;
+    let selectedHandCardIds = [];
+    let botTimerId = null;
+
+    let turnTimeLeft = TURN_TIME_LIMIT;
+    let turnIntervalId = null;
+    let matchEndedFlag = false;
+
+    function loadStats() {
+      try {
+        const raw = localStorage.getItem(STATS_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return {
+            wins: Number(parsed.wins) || 0,
+            losses: Number(parsed.losses) || 0,
+            kingsSlain: Number(parsed.kingsSlain) || 0,
+            winStreak: Number(parsed.winStreak) || 0
+          };
+        }
+      } catch (_) {}
+      return { wins: 0, losses: 0, kingsSlain: 0, winStreak: 0 };
+    }
+
+    function saveStats() {
+      try {
+        localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats));
+      } catch (_) {}
+      renderStatsDashboard();
+    }
+
+    function loadKeptCards(storageKey) {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch (_) {}
+      return [];
+    }
+
+    function saveAllKeptPools() {
+      try {
+        localStorage.setItem(KEPT_STORAGE_KEY, JSON.stringify(keptCardsPool));
+        localStorage.setItem(BOT_KEPT_STORAGE_KEY, JSON.stringify(botKeptCardsPool));
+      } catch (_) {}
+      renderStatsDashboard();
+    }
+
+    function renderStatsDashboard() {
+      document.getElementById('stat-wins').textContent = stats.wins;
+      document.getElementById('stat-losses').textContent = stats.losses;
+      document.getElementById('stat-kings-slain').textContent = stats.kingsSlain;
+      document.getElementById('stat-win-streak').textContent = stats.winStreak;
+      document.getElementById('stat-kept-cards').textContent = keptCardsPool.length;
+      document.getElementById('stat-bot-kept-cards').textContent = botKeptCardsPool.length;
+    }
+
+    function resetStoredStatsAndKept() {
+      stats = { wins: 0, losses: 0, kingsSlain: 0, winStreak: 0 };
+      keptCardsPool = [];
+      botKeptCardsPool = [];
+      saveStats();
+      saveAllKeptPools();
+      showToast('Đã đặt lại thành tích và kho quân giữ lại của cả 2 bên.', 'info');
+    }
+
+    function ensureAudio() {
+      if (soundMuted) return null;
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, duration = 0.12, type = 'triangle', gainPeak = 0.12, delay = 0) {
+      if (soundMuted) return;
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(gainPeak, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function sfxCardPlay(isHigh = false) {
+      playTone(isHigh ? 580 : 410, 0.11, 'triangle', 0.13, 0);
+      if (isHigh) playTone(820, 0.14, 'sine', 0.1, 0.05);
+    }
+
+    function sfxPass() {
+      playTone(260, 0.12, 'sine', 0.09, 0);
+      playTone(210, 0.14, 'sine', 0.08, 0.07);
+    }
+
+    function sfxKingAlert() {
+      playTone(190, 0.18, 'sawtooth', 0.14, 0);
+      playTone(155, 0.24, 'sawtooth', 0.14, 0.14);
+    }
+
+    function sfxWin() {
+      playTone(523.25, 0.14, 'triangle', 0.13, 0);
+      playTone(659.25, 0.14, 'triangle', 0.13, 0.11);
+      playTone(783.99, 0.24, 'triangle', 0.14, 0.22);
+    }
+
+    function sfxLose() {
+      playTone(340, 0.16, 'sawtooth', 0.11, 0);
+      playTone(260, 0.25, 'sawtooth', 0.11, 0.14);
+    }
+
+    function toggleMute() {
+      soundMuted = !soundMuted;
+      const btn = document.getElementById('btn-sound-toggle');
+      if (btn) {
+        btn.textContent = soundMuted ? '🔇 Tắt tiếng' : '🔊 Âm thanh';
+        btn.classList.toggle('text-rose-300', soundMuted);
+        btn.classList.toggle('text-emerald-300', !soundMuted);
+      }
+      if (!soundMuted) playTone(520, 0.09, 'sine', 0.1);
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const palette = {
+        info: 'bg-slate-900/95 border-emerald-500/60 text-emerald-200',
+        warn: 'bg-amber-950/95 border-amber-400/70 text-amber-200',
+        danger: 'bg-rose-950/95 border-rose-500/80 text-rose-100'
+      };
+      el.className = `px-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-bold shadow-2xl backdrop-blur-md animate-pop ${palette[type] || palette.info}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-6px)';
+        el.style.transition = 'all 0.2s ease';
+        setTimeout(() => el.remove(), 220);
+      }, 2400);
+    }
+
+    function toggleRulesModal(show) {
+      const modal = document.getElementById('rules-modal');
+      modal.classList.toggle('hidden', !show);
+      modal.classList.toggle('flex', show);
+    }
+
+    function clearHoldTimer() {
+      if (holdIntervalId) {
+        clearInterval(holdIntervalId);
+        holdIntervalId = null;
+      }
+    }
+
+    function setActiveScreen(screenName) {
+      currentScreen = screenName;
+      clearTurnTimer();
+      clearHoldTimer();
+      if (botTimerId) {
+        clearTimeout(botTimerId);
+        botTimerId = null;
+      }
+
+      document.getElementById('screen-menu').classList.toggle('hidden', screenName !== 'menu');
+      document.getElementById('phase-challenge').classList.toggle('hidden', screenName !== 'challenge');
+      document.getElementById('phase-setup').classList.toggle('hidden', screenName !== 'setup');
+      document.getElementById('screen-pass-curtain').classList.toggle('hidden', screenName !== 'curtain');
+      document.getElementById('phase-battle').classList.toggle('hidden', screenName !== 'battle');
+
+      const btnRestart = document.getElementById('btn-header-restart');
+      const badge = document.getElementById('header-phase-badge');
+      btnRestart.classList.toggle('hidden', screenName === 'menu');
+
+      const badgeMap = {
+        menu: 'Menu Chính',
+        challenge: 'Bước 1: 3 Câu = 3 Gói (10 Lá)',
+        setup: 'Bước 2: Giữ Quân & Xếp Cụm',
+        curtain: 'Chuyển Lượt Bảo Mật',
+        battle: 'Bước 3: Đấu Cụm (Màn Quyết Định = Lá 0)'
+      };
+      badge.textContent = badgeMap[screenName] || 'Cụm Quân & Lá 0';
+    }
+
+    function returnToMainMenu() {
+      matchEndedFlag = true;
+      setActiveScreen('menu');
+      renderStatsDashboard();
+      document.getElementById('header-mode-subtitle').textContent = 'Ai lấy số 0 trước thì bên kia không có • Vào trận hiện lá 0 quyết định';
+    }
+
+    function launchGame(mode, diff = 'tactical') {
+      gameMode = mode;
+      aiDifficulty = diff;
+      kingClaimedBySide = null;
+      matchEndedFlag = false;
+      p1Loot = 0;
+      p2Loot = 0;
+      attackerSide = 'p1';
+      roundNumber = 1;
+      clashState = null;
+      selectedHandCardIds = [];
+      p1CollectedDeck = [];
+      p2CollectedDeck = [];
+      document.getElementById('battle-log-box').innerHTML = '';
+
+      const modeLabel = mode === 'pvp'
+        ? '2 Người chung máy'
+        : `Đấu Máy (${diff === 'easy' ? 'Dễ' : diff === 'master' ? 'Bậc thầy săn Vua' : 'Chiến thuật'})`;
+      document.getElementById('header-mode-subtitle').textContent = `${modeLabel} • 1 lá số 0 duy nhất • Vào trận hiện lá 0 quyết định`;
+
+      ensureAudio();
+      startChallengePhaseForSide('p1');
+    }
+
+    function restartCurrentMode() {
+      launchGame(gameMode, aiDifficulty);
+    }
+
+    function buildFilteredDeckParts(prefix = 'P1', includeKing = true) {
+      const king = includeKing
+        ? {
+            uid: `${prefix}_KING0_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            label: '0',
+            power: 0,
+            isKing: true
+          }
+        : null;
+
+      const pool = [];
+      let idx = 1;
+      for (const r of RANK_META) {
+        const minusTwo = ['3', '4', '5', '6', '7'].includes(r.label) ? 2 : 0;
+        const availCopies = Math.max(0, r.copies - minusTwo);
+        for (let c = 0; c < availCopies; c++) {
+          pool.push({
+            uid: `${prefix}_${r.label}_${idx++}_${Math.random().toString(36).slice(2, 5)}`,
+            label: r.label,
+            power: r.power,
+            isKing: false
+          });
+        }
+      }
+
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+
+      return {
+        king,
+        fighters30: pool.slice(0, PACK_SIZE * TOTAL_QUESTIONS)
+      };
+    }
+
+    function getCardTierClass(card) {
+      if (card.isKing) return 'king-card text-amber-100';
+      if (card.power >= 15) return 'power-card text-indigo-100';
+      if (card.power >= 12) return 'high-card text-emerald-100';
+      return 'normal-card text-slate-100';
+    }
+
+    function renderMiniCard(card, extraClasses = '') {
+      const tier = getCardTierClass(card);
+      const kingTag = card.isKing
+        ? `<span class="text-[9px] font-black uppercase tracking-tighter text-amber-300 leading-none">SỐ 0</span>`
+        : `<span class="text-[9px] font-semibold opacity-65 leading-none">LỰC ${card.power}</span>`;
+      return `
+        <div class="w-12 h-16 sm:w-14 sm:h-20 rounded-xl border ${tier} flex flex-col items-center justify-between p-1.5 shadow-md select-none ${extraClasses}">
+          <span class="text-[9px] font-bold opacity-70 self-start leading-none">${card.isKing ? '👑' : '•'}</span>
+          <span class="text-lg sm:text-xl font-black leading-none">${card.label}</span>
+          ${kingTag}
+        </div>
+      `;
+    }
+
+    function isValidSingleAttackCard(card) {
+      return Boolean(card && !card.isKing);
+    }
+
+    function canSingleCardBeat(card, currentTableCard) {
+      if (!isValidSingleAttackCard(card)) return false;
+      if (!currentTableCard) return true;
+      return card.power > currentTableCard.power;
+    }
+
+    function hasOnlyKingLeft(hand) {
+      if (!hand || hand.length === 0) return true;
+      return hand.every(c => c.isKing);
+    }
+
+    function getLegalSingleMoves(hand, currentTableCard) {
+      return hand
+        .filter(c => canSingleCardBeat(c, currentTableCard))
+        .sort((a, b) => a.power - b.power);
+    }
+
+    function startChallengePhaseForSide(side) {
+      challengeTargetSide = side;
+      const canSideGetKing = !SINGLE_KING_IN_MATCH || (kingClaimedBySide === null);
+      const parts = buildFilteredDeckParts(side === 'p1' ? 'P1' : 'P2', canSideGetKing);
+      kingCardItem = parts.king;
+      normalPoolQueue = parts.fighters30;
+      challengeCollectedCards = [];
+      answeredQuestionsCount = 0;
+
+      const sideName = gameMode === 'pvp'
+        ? (side === 'p1' ? 'Bên 1 (Người chơi 1)' : 'Bên 2 (Người chơi 2)')
+        : 'Bên 1 (Bạn)';
+
+      document.getElementById('challenge-player-heading').innerHTML =
+        `Trả lời 3 câu hỏi để nhận 3 gói 10 lá cho <span class="text-emerald-400">${sideName}</span>`;
+
+      const subEl = document.getElementById('challenge-king-rule-sub');
+      if (subEl) {
+        if (!canSideGetKing) {
+          subEl.innerHTML = `Bộ nguồn đã <strong>trừ 2 lá (3..7)</strong>. Lá số <strong>0</strong> đã được bên kia lấy trước nên ván này <strong>${sideName} không có lá số 0</strong>.`;
+        } else {
+          subEl.innerHTML = `Bộ nguồn đã <strong>trừ 2 lá 3, 2 lá 4, 2 lá 5, 2 lá 6, 2 lá 7</strong>. Đúng đủ 3 câu nhận 3 gói 10 lá + <strong class="text-amber-400">Lá số 0</strong> (bên kia sẽ không có lá số 0).`;
+        }
+      }
+
+      setActiveScreen('challenge');
+      buildQuestionForStep(1);
+      renderChallengeProgress();
+    }
+
+    function buildQuestionForStep(stepNum) {
+      let question = '';
+      let hint = '';
+      let options = [];
+
+      if (stepNum === 1) {
+        const start = 3 + Math.floor(Math.random() * 5);
+        const step = 2 + Math.floor(Math.random() * 2);
+        const seq = [start, start + step, start + step * 2];
+        const ans = start + step * 3;
+        question = `Câu 1/3: Dãy số tiếp theo là gì?  ${seq.join('  →  ')}  →  [ ? ]`;
+        hint = `Cộng thêm ${step} cho mỗi bước.`;
+        const set = new Set([ans]);
+        while (set.size < 4) {
+          const cand = ans + (Math.floor(Math.random() * 6) - 2);
+          if (cand > 0 && cand !== ans) set.add(cand);
+        }
+        options = Array.from(set).map(v => ({ label: `${v}`, correct: v === ans }));
+      } else if (stepNum === 2) {
+        const x = 5 + Math.floor(Math.random() * 7);
+        const y = 4 + Math.floor(Math.random() * 7);
+        question = `Câu 2/3: Nếu A = ${x} và B = ${y}, thì A + B bằng bao nhiêu?`;
+        hint = `Tính tổng đơn giản của A và B.`;
+        const ans = x + y;
+        const set = new Set([ans]);
+        while (set.size < 4) {
+          const cand = Math.max(2, ans + (Math.floor(Math.random() * 6) - 2));
+          if (cand !== ans) set.add(cand);
+        }
+        options = Array.from(set).map(v => ({ label: `${v}`, correct: v === ans }));
+      } else {
+        const n1 = 8 + Math.floor(Math.random() * 4);
+        const n2 = 13 + Math.floor(Math.random() * 3);
+        const hasKingReward = Boolean(kingCardItem);
+        question = `Câu 3/3 (Mở gói 10 lá cuối${hasKingReward ? ' + Lá số 0 duy nhất' : ''}): Trong hai mức sức mạnh ${n1} và ${n2}, mức nào MẠNH HƠN?`;
+        hint = `Chọn giá trị sức mạnh cao hơn.`;
+        options = [
+          { label: `Lực ${n1}`, correct: n1 > n2 },
+          { label: `Lực ${n2}`, correct: n2 > n1 },
+          { label: `Bằng nhau`, correct: false },
+          { label: `Không có đáp án đúng`, correct: false }
+        ];
+      }
+
+      for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+      }
+
+      currentQuestionData = { stepNum, options };
+      document.getElementById('challenge-type-badge').textContent = `Câu hỏi ${stepNum} / ${TOTAL_QUESTIONS}`;
+      document.getElementById('challenge-reward-badge').textContent = (stepNum === TOTAL_QUESTIONS && kingCardItem)
+        ? `Phần thưởng: +${PACK_SIZE} lá ngẫu nhiên + Lá số 0`
+        : `Phần thưởng: +${PACK_SIZE} lá ngẫu nhiên`;
+      document.getElementById('challenge-question-text').textContent = question;
+      document.getElementById('challenge-hint-text').textContent = hint;
+
+      const grid = document.getElementById('challenge-options-grid');
+      grid.innerHTML = '';
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'p-3.5 rounded-xl bg-slate-900 hover:bg-emerald-950/70 border border-slate-700 hover:border-emerald-400 text-left text-xs sm:text-sm font-bold text-white transition cursor-pointer';
+        btn.textContent = `${['A', 'B', 'C', 'D'][idx]}. ${opt.label}`;
+        btn.onclick = () => handleQuestionAnswer(opt.correct);
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleQuestionAnswer(isCorrect) {
+      if (!currentQuestionData || answeredQuestionsCount >= TOTAL_QUESTIONS) return;
+      if (!isCorrect) {
+        sfxPass();
+        showToast('Chưa đúng! Hãy chọn lại đáp án cho câu hỏi này.', 'warn');
+        return;
+      }
+
+      const packCards = normalPoolQueue.splice(0, PACK_SIZE);
+      challengeCollectedCards.push(...packCards);
+      answeredQuestionsCount++;
+
+      let toastMsg = `Đúng câu ${answeredQuestionsCount}/3! Nhận gói +${packCards.length} lá ngẫu nhiên.`;
+
+      if (answeredQuestionsCount === TOTAL_QUESTIONS) {
+        if (kingCardItem) {
+          challengeCollectedCards.push(kingCardItem);
+          kingCardItem = null;
+          if (SINGLE_KING_IN_MATCH && !kingClaimedBySide) {
+            kingClaimedBySide = challengeTargetSide;
+          }
+          toastMsg = `Đủ 3/3 câu! Bạn đã lấy Lá số 0 — bên kia sẽ KHÔNG có lá số 0.`;
+        } else if (SINGLE_KING_IN_MATCH && kingClaimedBySide && kingClaimedBySide !== challengeTargetSide) {
+          toastMsg = `Đủ 3/3 câu! Nhận gói +${packCards.length} lá (Lá số 0 đã ở bên kia).`;
+        }
+      }
+
+      sfxCardPlay(true);
+      showToast(toastMsg, 'info');
+      renderChallengeProgress();
+
+      if (answeredQuestionsCount < TOTAL_QUESTIONS) {
+        buildQuestionForStep(answeredQuestionsCount + 1);
+      } else {
+        document.getElementById('challenge-type-badge').textContent = `Hoàn tất 3 / 3 câu hỏi`;
+        document.getElementById('challenge-reward-badge').textContent = `Đã đủ 3 gói (30 lá)`;
+        document.getElementById('challenge-question-text').textContent =
+          '🎉 Bạn đã nhận đủ 3 gói × 10 lá ngẫu nhiên! Bấm nút bên dưới để vào giai đoạn giữ & xếp cụm.';
+        document.getElementById('challenge-hint-text').textContent = '';
+        document.getElementById('challenge-options-grid').innerHTML = '';
+      }
+    }
+
+    function renderChallengeProgress() {
+      const count = challengeCollectedCards.length;
+      const hasKing = challengeCollectedCards.some(c => c.isKing);
+      const maxExpected = PACK_SIZE * TOTAL_QUESTIONS + (kingCardItem || hasKing ? 1 : 0);
+      document.getElementById('challenge-collected-count').textContent = count;
+      document.getElementById('challenge-pool-mini-count').textContent = count;
+
+      let kingStatusText = 'Lá 0: Không có';
+      if (hasKing) kingStatusText = 'Lá 0: Đã lấy (bên kia không có)';
+      else if (kingCardItem) kingStatusText = 'Lá 0: Đợi câu 3';
+      else if (SINGLE_KING_IN_MATCH && kingClaimedBySide && kingClaimedBySide !== challengeTargetSide) {
+        kingStatusText = 'Lá 0: Bên kia đã lấy';
+      }
+
+      document.getElementById('challenge-pack-status').textContent =
+        `Gói: ${answeredQuestionsCount}/3 • ${kingStatusText}`;
+      document.getElementById('challenge-progress-bar').style.width = `${Math.min(100, (count / Math.max(1, maxExpected)) * 100)}%`;
+
+      document.getElementById('btn-go-setup-from-challenge').disabled = answeredQuestionsCount < TOTAL_QUESTIONS;
+
+      const preview = document.getElementById('challenge-collected-preview');
+      preview.innerHTML = '';
+      challengeCollectedCards.slice(-24).forEach(card => {
+        preview.insertAdjacentHTML('beforeend', renderMiniCard(card, 'scale-90 origin-left'));
+      });
+      if (count === 0) {
+        preview.innerHTML = `<span class="text-xs text-slate-500 italic">Trả lời câu hỏi để nhận gói 10 lá đầu tiên...</span>`;
+      }
+    }
+
+    function proceedToSetupFromChallenge() {
+      if (answeredQuestionsCount < TOTAL_QUESTIONS) return;
+      if (challengeTargetSide === 'p1') {
+        p1CollectedDeck = [...challengeCollectedCards];
+        enterClusterSetup('p1');
+      } else {
+        p2CollectedDeck = [...challengeCollectedCards];
+        enterClusterSetup('p2');
+      }
+    }
+
+    // =========================================================
+    // HOLD WINDOW + CLUSTER SETUP (REPORTS CARD 0 IF PRESENT)
+    // =========================================================
+    let setupClusters = [];
+    let unassignedPool = [];
+
+    function enterClusterSetup(side) {
+      setupTargetSide = side;
+      activeClusterIdx = 0;
+      pickedClusterCard = null;
+      setupClusters = Array.from({ length: 5 }, () => ({ cards: [], defeated: false, hasKing: false }));
+      unassignedPool = side === 'p1' ? [...p1CollectedDeck] : [...p2CollectedDeck];
+
+      const sideLabel = gameMode === 'pvp'
+        ? (side === 'p1' ? 'Bên 1 (Người chơi 1)' : 'Bên 2 (Người chơi 2)')
+        : 'Bên 1 (Bạn)';
+      const sideHasKing = unassignedPool.some(c => c.isKing);
+
+      document.getElementById('setup-step-tag').textContent = `${sideLabel} • Thời gian giữ quân & xếp cụm`;
+      document.getElementById('setup-player-heading').innerHTML = sideHasKing
+        ? `${sideLabel}: Giữ quân & xếp cụm (<span class="text-amber-400">Lá số 0</span> là màn quyết định)`
+        : `${sideLabel}: Giữ quân & xếp cụm (Không có Lá số 0 ở bên này)`;
+
+      const descEl = document.getElementById('setup-king-status-desc');
+      if (descEl) {
+        descEl.innerHTML = sideHasKing
+          ? 'Cụm giữ lá <strong>0</strong> sẽ được báo trước. Khi bước vào đấu trận, lá số <strong>0</strong> hiện rõ để báo hiệu đây là <strong>màn quyết định</strong>!'
+          : 'Bên này không có Lá số <strong>0</strong>; hãy chia đều sức mạnh vào 5 cụm và tận dụng cơ chế ăn lá nào lấy lá đó.';
+      }
+
+      setActiveScreen('setup');
+      renderSetupUI();
+      startHoldWindowCountdown();
+    }
+
+    function startHoldWindowCountdown() {
+      clearHoldTimer();
+      holdTimeLeft = HOLD_WINDOW_SECONDS;
+      updateHoldTimerUI();
+
+      holdIntervalId = setInterval(() => {
+        if (currentScreen !== 'setup') {
+          clearHoldTimer();
+          return;
+        }
+        holdTimeLeft--;
+        updateHoldTimerUI();
+        if (holdTimeLeft <= 0) {
+          clearHoldTimer();
+          if (unassignedPool.length > 0) {
+            autoArrangeSmart();
+          }
+          const nonEmptyCount = setupClusters.filter(c => c.cards.length > 0).length;
+          if (unassignedPool.length === 0 && nonEmptyCount === 5) {
+            showToast('Hết thời gian giữ quân — tự động vào trận!', 'info');
+            confirmSetupDone();
+          }
+        }
+      }, 1000);
+    }
+
+    function updateHoldTimerUI() {
+      const el = document.getElementById('hold-timer-badge');
+      if (!el) return;
+      el.textContent = `⏳ Giữ quân: ${holdTimeLeft}s`;
+      el.classList.toggle('text-rose-300', holdTimeLeft <= 5);
+      el.classList.toggle('border-rose-500', holdTimeLeft <= 5);
+      el.classList.toggle('text-amber-300', holdTimeLeft > 5);
+    }
+
+    function supplementKeptCardsToPool() {
+      if (keptCardsPool.length === 0) return;
+      const added = keptCardsPool.splice(0, keptCardsPool.length).map((c, idx) => ({
+        uid: `KEPT_${setupTargetSide.toUpperCase()}_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 5)}`,
+        label: c.label,
+        power: c.power,
+        isKing: false
+      }));
+      unassignedPool.push(...added);
+      saveAllKeptPools();
+      sfxCardPlay(true);
+      showToast(`Đã nạp +${added.length} quân đang giữ vào kho!`, 'info');
+      renderSetupUI();
+    }
+
+    function syncClusterKingFlags(clustersArr) {
+      for (const c of clustersArr) {
+        c.hasKing = c.cards.some(card => card.isKing);
+      }
+    }
+
+    function selectActiveCluster(idx) {
+      if (pickedClusterCard) {
+        const fromIdx = pickedClusterCard.clusterIdx;
+        const fromCardIdx = pickedClusterCard.cardIdx;
+        if (fromIdx !== idx && setupClusters[fromIdx] && setupClusters[fromIdx].cards[fromCardIdx]) {
+          moveCardBetweenSetupClusters(fromIdx, fromCardIdx, idx);
+          pickedClusterCard = null;
+          renderSetupUI();
+          return;
+        }
+      }
+      activeClusterIdx = idx;
+      renderSetupUI();
+    }
+
+    function moveCardBetweenSetupClusters(fromIdx, fromCardIdx, toIdx) {
+      if (fromIdx === toIdx) return;
+      const fromCards = setupClusters[fromIdx].cards;
+      const toCards = setupClusters[toIdx].cards;
+      const movingCard = fromCards[fromCardIdx];
+      if (!movingCard) return;
+
+      fromCards.splice(fromCardIdx, 1);
+      toCards.push(movingCard);
+      sfxCardPlay(movingCard.power >= 13);
+      syncClusterKingFlags(setupClusters);
+    }
+
+    function pickClusterCard(clusterIdx, cardIdx, event) {
+      if (event) event.stopPropagation();
+      if (pickedClusterCard && pickedClusterCard.clusterIdx === clusterIdx && pickedClusterCard.cardIdx === cardIdx) {
+        pickedClusterCard = null;
+      } else {
+        pickedClusterCard = { clusterIdx, cardIdx };
+        activeClusterIdx = clusterIdx;
+      }
+      renderSetupUI();
+    }
+
+    function movePickedClusterCardToActive() {
+      if (!pickedClusterCard) return;
+      moveCardBetweenSetupClusters(pickedClusterCard.clusterIdx, pickedClusterCard.cardIdx, activeClusterIdx);
+      pickedClusterCard = null;
+      renderSetupUI();
+    }
+
+    function cancelPickedClusterCard() {
+      pickedClusterCard = null;
+      renderSetupUI();
+    }
+
+    function assignUnassignedCard(uid) {
+      const poolIdx = unassignedPool.findIndex(c => c.uid === uid);
+      if (poolIdx === -1) return;
+      const [card] = unassignedPool.splice(poolIdx, 1);
+      setupClusters[activeClusterIdx].cards.push(card);
+      syncClusterKingFlags(setupClusters);
+      sfxCardPlay(card.power >= 13);
+      renderSetupUI();
+    }
+
+    function returnClusterCardToPool(clusterIdx, cardIdx, event) {
+      if (event) event.stopPropagation();
+      if (pickedClusterCard) {
+        moveCardBetweenSetupClusters(pickedClusterCard.clusterIdx, pickedClusterCard.cardIdx, clusterIdx);
+        pickedClusterCard = null;
+        renderSetupUI();
+        return;
+      }
+      const [card] = setupClusters[clusterIdx].cards.splice(cardIdx, 1);
+      if (card) {
+        unassignedPool.push(card);
+        syncClusterKingFlags(setupClusters);
+        sfxPass();
+        renderSetupUI();
+      }
+    }
+
+    function clearAllClusters() {
+      for (const c of setupClusters) {
+        unassignedPool.push(...c.cards);
+        c.cards = [];
+        c.hasKing = false;
+      }
+      pickedClusterCard = null;
+      activeClusterIdx = 0;
+      renderSetupUI();
+    }
+
+    function autoArrangeRandom() {
+      clearAllClusters();
+      const shuffled = [...unassignedPool];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      unassignedPool = [];
+      for (let i = 0; i < shuffled.length; i++) {
+        setupClusters[i % 5].cards.push(shuffled[i]);
+      }
+      syncClusterKingFlags(setupClusters);
+      sfxCardPlay(true);
+      renderSetupUI();
+    }
+
+    function autoArrangeSmart() {
+      clearAllClusters();
+      const allCards = [...unassignedPool];
+      unassignedPool = [];
+
+      const kingCard = allCards.find(c => c.isKing);
+      const fighters = allCards
+        .filter(c => !c.isKing)
+        .sort((a, b) => b.power - a.power);
+
+      if (kingCard) {
+        const kingClusterIdx = Math.floor(Math.random() * 5);
+        setupClusters[kingClusterIdx].cards.push(kingCard);
+      }
+
+      let cursor = 0;
+      while (fighters.length > 0) {
+        const targetIdx = cursor % 5;
+        setupClusters[targetIdx].cards.push(fighters.shift());
+        cursor++;
+      }
+
+      syncClusterKingFlags(setupClusters);
+      sfxCardPlay(true);
+      renderSetupUI();
+    }
+
+    function buildBotFilteredClusters(diff) {
+      // Strictly NO king card for bot if kingClaimedBySide is already set (e.g., player took card '0' first).
+      const botGetsKing = kingClaimedBySide === null;
+      const parts = buildFilteredDeckParts('B2', botGetsKing);
+      const kingCard = parts.king;
+      const normals = [...parts.fighters30];
+
+      if (botGetsKing && kingCard) {
+        kingClaimedBySide = 'p2';
+      }
+
+      if (botKeptCardsPool.length > 0) {
+        const botAdded = botKeptCardsPool.splice(0, botKeptCardsPool.length).map((c, idx) => ({
+          uid: `BOT_KEPT_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 5)}`,
+          label: c.label,
+          power: c.power,
+          isKing: false
+        }));
+        normals.push(...botAdded);
+        saveAllKeptPools();
+      }
+
+      if (diff === 'easy') {
+        const clusters = Array.from({ length: 5 }, () => ({ cards: [], defeated: false, hasKing: false }));
+        if (kingCard) {
+          const kIdx = Math.floor(Math.random() * 5);
+          clusters[kIdx].cards.push(kingCard);
+        }
+        for (let i = 0; i < normals.length; i++) {
+          clusters[i % 5].cards.push(normals[i]);
+        }
+        syncClusterKingFlags(clusters);
+        return clusters;
+      }
+
+      normals.sort((a, b) => b.power - a.power);
+      const clusters = Array.from({ length: 5 }, () => ({ cards: [], defeated: false, hasKing: false }));
+      const kingClusterIdx = Math.floor(Math.random() * 5);
+      if (kingCard) {
+        clusters[kingClusterIdx].cards.push(kingCard);
+        const guardCount = diff === 'master' ? 3 : 2;
+        for (let g = 0; g < guardCount && normals.length > 0; g++) {
+          clusters[kingClusterIdx].cards.push(normals.shift());
+        }
+      }
+
+      let idx = 0;
+      while (normals.length > 0) {
+        clusters[idx % 5].cards.push(normals.shift());
+        idx++;
+      }
+
+      syncClusterKingFlags(clusters);
+      return clusters;
+    }
+
+    function renderSetupUI() {
+      const grid = document.getElementById('setup-clusters-grid');
+      grid.innerHTML = '';
+
+      const suppBtn = document.getElementById('btn-supplement-kept');
+      const suppCountEl = document.getElementById('kept-supplement-count');
+      if (suppBtn && suppCountEl) {
+        suppCountEl.textContent = keptCardsPool.length;
+        suppBtn.classList.toggle('hidden', keptCardsPool.length === 0 || setupTargetSide !== 'p1');
+      }
+
+      let totalPlaced = 0;
+      setupClusters.forEach((cluster, idx) => {
+        totalPlaced += cluster.cards.length;
+        const isActive = idx === activeClusterIdx;
+        const powerSum = cluster.cards.reduce((acc, c) => acc + c.power, 0);
+        const kingPresent = cluster.cards.some(c => c.isKing);
+
+        const cardEl = document.createElement('div');
+        cardEl.onclick = () => selectActiveCluster(idx);
+        cardEl.className = `rounded-2xl border p-3.5 transition cursor-pointer flex flex-col justify-between min-h-[190px] ${
+          kingPresent
+            ? 'bg-amber-950/35 border-amber-400/80 shadow-lg'
+            : isActive
+              ? 'bg-emerald-950/55 border-emerald-400 ring-2 ring-emerald-400/40 shadow-lg'
+              : 'bg-slate-900/85 border-slate-800 hover:border-slate-600'
+        }`;
+
+        const pillsHtml = cluster.cards.map((c, cIdx) => {
+          const isPicked = pickedClusterCard && pickedClusterCard.clusterIdx === idx && pickedClusterCard.cardIdx === cIdx;
+          const badgeStyle = c.isKing
+            ? 'bg-amber-500/30 border-amber-400 text-amber-200 font-black'
+            : c.power >= 12
+              ? 'bg-emerald-950 border-emerald-600/70 text-emerald-200 font-bold'
+              : 'bg-slate-800 border-slate-700 text-slate-200 font-semibold';
+          return `
+            <span
+              onclick="pickClusterCard(${idx}, ${cIdx}, event)"
+              ondblclick="returnClusterCardToPool(${idx}, ${cIdx}, event)"
+              title="Bấm chọn để chuyển/đổi cụm • Nhấp đúp trả về kho"
+              class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs border transition ${badgeStyle} ${
+                isPicked ? 'ring-2 ring-indigo-400 -translate-y-0.5' : ''
+              }"
+            >
+              ${c.isKing ? '👑 0' : c.label}
+            </span>
+          `;
+        }).join('');
+
+        cardEl.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between gap-1 mb-2">
+              <span class="text-sm font-extrabold ${isActive ? 'text-emerald-300' : 'text-white'}">
+                Cụm ${idx + 1} ${isActive ? '• Đang chọn' : ''}
+              </span>
+              <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-800 text-emerald-300">
+                ${cluster.cards.length} lá
+              </span>
+            </div>
+            ${kingPresent ? `
+              <div class="mb-2 px-2 py-1 rounded-lg bg-amber-500/20 border border-amber-400/60 text-amber-300 text-[11px] font-black flex items-center gap-1">
+                <span>🔔 BÁO TRƯỚC: CÓ SỐ 0</span>
+              </div>
+            ` : ''}
+            <div class="flex flex-wrap gap-1.5 min-h-[76px]">
+              ${pillsHtml || `<span class="text-xs text-slate-500 italic">Bấm để nạp lá vào cụm này...</span>`}
+            </div>
+          </div>
+          <div class="pt-2.5 mt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Tổng lực: <strong class="text-slate-200">${powerSum}</strong></span>
+            <span>${kingPresent ? '<strong class="text-amber-400">🔔 Số 0</strong>' : 'Quân thường'}</span>
+          </div>
+        `;
+        grid.appendChild(cardEl);
+      });
+
+      document.getElementById('active-cluster-label').textContent = `Cụm ${activeClusterIdx + 1}`;
+      document.getElementById('unassigned-count-badge').textContent = `${unassignedPool.length} lá còn lại`;
+
+      const swapBar = document.getElementById('cluster-swap-bar');
+      if (pickedClusterCard) {
+        const pickedCard = setupClusters[pickedClusterCard.clusterIdx]?.cards[pickedClusterCard.cardIdx];
+        swapBar.classList.remove('hidden');
+        document.getElementById('swap-status-text').textContent =
+          `Đang chọn lá [${pickedCard?.isKing ? '👑 0' : pickedCard?.label}] ở Cụm ${pickedClusterCard.clusterIdx + 1} — bấm cụm đích để chuyển/đổi.`;
+      } else {
+        swapBar.classList.add('hidden');
+      }
+
+      const poolEl = document.getElementById('unassigned-cards-pool');
+      poolEl.innerHTML = '';
+      unassignedPool.forEach(card => {
+        const tier = getCardTierClass(card);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => assignUnassignedCard(card.uid);
+        btn.className = `game-card w-12 h-16 sm:w-14 sm:h-20 rounded-xl border ${tier} flex flex-col items-center justify-between p-1.5 shadow cursor-pointer`;
+        btn.innerHTML = `
+          <span class="text-[9px] font-bold opacity-70 self-start leading-none">${card.isKing ? '👑' : '•'}</span>
+          <span class="text-lg sm:text-xl font-black leading-none">${card.label}</span>
+          <span class="text-[9px] font-semibold opacity-65 leading-none">${card.isKing ? 'SỐ 0' : 'LỰC ' + card.power}</span>
+        `;
+        poolEl.appendChild(btn);
+      });
+
+      const nonEmptyCount = setupClusters.filter(c => c.cards.length > 0).length;
+      const allPlaced = totalPlaced >= 5 && unassignedPool.length === 0 && nonEmptyCount === 5;
+      document.getElementById('btn-start-battle').disabled = !allPlaced;
+    }
+
+    function confirmSetupDone() {
+      const nonEmptyCount = setupClusters.filter(c => c.cards.length > 0).length;
+      if (unassignedPool.length > 0 || nonEmptyCount !== 5) {
+        showToast('Hãy xếp hết bài trong kho vào cả 5 cụm!', 'warn');
+        return;
+      }
+      clearHoldTimer();
+      syncClusterKingFlags(setupClusters);
+
+      if (gameMode === 'pvp') {
+        if (setupTargetSide === 'p1') {
+          p1Clusters = setupClusters.map(c => ({ ...c, cards: [...c.cards] }));
+          openPassCurtain(
+            'Chuyển máy cho Bên 2 (Người chơi 2)',
+            'Bên 1 đã xếp xong cụm. Chuyển máy cho Bên 2 trả lời 3 câu nhận 3 gói 10 lá và xếp cụm.',
+            () => startChallengePhaseForSide('p2')
+          );
+        } else {
+          p2Clusters = setupClusters.map(c => ({ ...c, cards: [...c.cards] }));
+          openPassCurtain(
+            'Vào đấu trường (Báo trước số 0 • Vào trận hiện lá 0 quyết định)',
+            'Cả hai bên đã sẵn sàng. Bên 1 bắt đầu chọn cụm xuất quân!',
+            () => startBattleArena()
+          );
+        }
+      } else {
+        p1Clusters = setupClusters.map(c => ({ ...c, cards: [...c.cards] }));
+        p2Clusters = buildBotFilteredClusters(aiDifficulty);
+        startBattleArena();
+      }
+    }
+
+    function openPassCurtain(title, desc, onReady) {
+      pendingCurtainCallback = onReady;
+      document.getElementById('curtain-title').textContent = title;
+      document.getElementById('curtain-desc').textContent = desc;
+      setActiveScreen('curtain');
+    }
+
+    function dismissPassCurtain() {
+      const cb = pendingCurtainCallback;
+      pendingCurtainCallback = null;
+      if (typeof cb === 'function') cb();
+    }
+
+    // =========================================================
+    // BATTLE ARENA: PRE-ANNOUNCE 0 + REVEAL 0 UPON ENTERING CLASH
+    // =========================================================
+    let selectedP1ClusterIdx = null;
+    let selectedP2ClusterIdx = null;
+
+    function appendBattleLog(text) {
+      const box = document.getElementById('battle-log-box');
+      if (!box) return;
+      const line = document.createElement('div');
+      line.textContent = `• ${text}`;
+      box.prepend(line);
+      while (box.children.length > 8) {
+        box.removeChild(box.lastChild);
+      }
+    }
+
+    function getSideName(side) {
+      if (gameMode === 'pvp') return side === 'p1' ? 'Bên 1' : 'Bên 2';
+      return side === 'p1' ? 'Bên 1 (Bạn)' : 'Bên 2 (Máy)';
+    }
+
+    function takeCardToSidePoolImmediately(side, beatenCard) {
+      if (!beatenCard || beatenCard.isKing) return;
+      const cleanCard = { label: beatenCard.label, power: beatenCard.power, isKing: false };
+      if (side === 'p1') {
+        p1Loot += 1;
+        keptCardsPool.push(cleanCard);
+      } else {
+        p2Loot += 1;
+        botKeptCardsPool.push(cleanCard);
+      }
+      saveAllKeptPools();
+      renderScoreboard();
+    }
+
+    function startBattleArena() {
+      matchEndedFlag = false;
+      selectedP1ClusterIdx = null;
+      selectedP2ClusterIdx = null;
+      clashState = null;
+
+      const p2Tag = gameMode === 'pvp' ? 'BÊN 2' : 'MÁY';
+      document.getElementById('p1-avatar-badge').textContent = 'BÊN 1';
+      document.getElementById('p2-avatar-badge').textContent = p2Tag;
+      document.getElementById('p1-name-label').textContent = 'Quân đã lấy về của Bên 1';
+      document.getElementById('p2-name-label').textContent = gameMode === 'pvp' ? 'Quân đã lấy về của Bên 2' : 'Quân đã lấy về của Bên 2 (Máy)';
+      document.getElementById('top-clusters-heading').textContent = gameMode === 'pvp'
+        ? '5 Cụm Úp Của Bên 2 (Vào trận hiện lá 0 mới biết là màn quyết định)'
+        : '5 Cụm Úp Của Bên 2 - Máy (Vào trận hiện lá 0 mới biết là màn quyết định)';
+      document.getElementById('bottom-clusters-heading').textContent = '5 Cụm Quân Của Bên 1 (Báo trước cụm có số 0)';
+
+      setActiveScreen('battle');
+      showClusterSelectionSubView();
+      renderScoreboard();
+
+      if (kingClaimedBySide) {
+        const otherSide = kingClaimedBySide === 'p1' ? 'p2' : 'p1';
+        appendBattleLog(`Lá số 0 thuộc về ${getSideName(kingClaimedBySide)} — ${getSideName(otherSide)} KHÔNG có lá số 0.`);
+      } else {
+        appendBattleLog('Đấu bắt đầu! Vào trận hiện lá 0 là màn quyết định.');
+      }
+    }
+
+    function renderScoreboard() {
+      document.getElementById('player-loot-count').textContent = p1Loot;
+      document.getElementById('bot-loot-count').textContent = p2Loot;
+      document.getElementById('round-counter').textContent = `Lượt #${roundNumber}`;
+      const atkEl = document.getElementById('attacker-role-text');
+      atkEl.textContent = attackerSide === 'p1'
+        ? 'BÊN 1 ĐANG GIỮ QUYỀN CÔNG'
+        : `${getSideName('p2').toUpperCase()} ĐANG GIỮ QUYỀN CÔNG`;
+    }
+
+    function showClusterSelectionSubView() {
+      clearTurnTimer();
+      document.getElementById('subview-cluster-select').classList.remove('hidden');
+      document.getElementById('subview-clash-combat').classList.add('hidden');
+      selectedP1ClusterIdx = null;
+      selectedP2ClusterIdx = null;
+
+      const remainingP1 = p1Clusters.filter(c => !c.defeated);
+      const remainingP2 = p2Clusters.filter(c => !c.defeated);
+
+      if (remainingP1.length === 0 || remainingP2.length === 0) {
+        concludeMatchByLoot('Hết cụm chiến đấu trên bàn.');
+        return;
+      }
+
+      renderArenaClusterCards();
+
+      if (gameMode === 'ai' && attackerSide === 'p2') {
+        document.getElementById('select-instruction-title').textContent = 'Bên 2 (Máy) đang chọn cụm xuất quân...';
+        document.getElementById('select-instruction-sub').textContent = 'Đè lá nào lấy về lá đó ngay • Vào trận hiện lá 0 là màn quyết định.';
+        document.getElementById('btn-confirm-clash').disabled = true;
+        botTimerId = setTimeout(() => {
+          if (matchEndedFlag || currentScreen !== 'battle') return;
+          const availP2 = p2Clusters.map((c, i) => (!c.defeated ? i : -1)).filter(i => i !== -1);
+          const availP1 = p1Clusters.map((c, i) => (!c.defeated ? i : -1)).filter(i => i !== -1);
+          const bIdx = availP2[Math.floor(Math.random() * availP2.length)];
+          const pIdx = availP1[Math.floor(Math.random() * availP1.length)];
+          beginClusterClash(pIdx, bIdx);
+        }, 850);
+      } else {
+        const activeSide = attackerSide;
+        document.getElementById('select-instruction-title').textContent =
+          `${getSideName(activeSide)}: Chọn 1 cụm của mình và 1 cụm đối thủ để giao tranh`;
+        document.getElementById('select-instruction-sub').textContent =
+          'Cụm có báo trước số 0 của bạn hiển thị rõ—khi vào trận sẽ hiện lá số 0 để báo hiệu màn quyết định!';
+        updateClashSelectButton();
+      }
+    }
+
+    function renderArenaClusterCards() {
+      const botGrid = document.getElementById('arena-bot-clusters');
+      const playerGrid = document.getElementById('arena-player-clusters');
+      botGrid.innerHTML = '';
+      playerGrid.innerHTML = '';
+
+      p2Clusters.forEach((c, idx) => {
+        const isSelected = selectedP2ClusterIdx === idx;
+        const canClick = !c.defeated && !(gameMode === 'ai' && attackerSide === 'p2');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.disabled = !canClick;
+        btn.onclick = () => {
+          if (!canClick) return;
+          selectedP2ClusterIdx = idx;
+          sfxCardPlay(false);
+          renderArenaClusterCards();
+          updateClashSelectButton();
+        };
+        btn.className = `rounded-2xl border p-3.5 text-left transition min-h-[124px] flex flex-col justify-between ${
+          c.defeated
+            ? 'bg-slate-950/50 border-slate-800/60 opacity-45 cursor-not-allowed'
+            : isSelected
+              ? 'bg-rose-950/60 border-rose-400 ring-2 ring-rose-400/40 cursor-pointer'
+              : 'card-back border-slate-700 hover:border-rose-400/70 cursor-pointer'
+        }`;
+        btn.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-white bg-slate-950/80 px-2 py-0.5 rounded-md">Cụm ${idx + 1}</span>
+            <span class="text-[11px] font-bold ${c.defeated ? 'text-slate-500' : 'text-rose-300 bg-slate-950/80 px-2 py-0.5 rounded-md'}">
+              ${c.defeated ? 'Đã mất' : c.cards.length + ' lá úp'}
+            </span>
+          </div>
+          <div class="text-xs font-semibold ${c.defeated ? 'text-slate-500' : 'text-slate-200 bg-slate-950/75 px-2.5 py-1 rounded-lg'}">
+            ${c.defeated ? 'Cụm trống' : (isSelected ? '🎯 Mục tiêu đã chọn' : 'Chạm để chọn')}
+          </div>
+        `;
+        botGrid.appendChild(btn);
+      });
+
+      p1Clusters.forEach((c, idx) => {
+        const isSelected = selectedP1ClusterIdx === idx;
+        const canClick = !c.defeated && !(gameMode === 'ai' && attackerSide === 'p2');
+        const hasKing = !c.defeated && c.cards.some(card => card.isKing);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.disabled = !canClick;
+        btn.onclick = () => {
+          if (!canClick) return;
+          selectedP1ClusterIdx = idx;
+          sfxCardPlay(false);
+          renderArenaClusterCards();
+          updateClashSelectButton();
+        };
+        btn.className = `rounded-2xl border p-3.5 text-left transition min-h-[128px] flex flex-col justify-between ${
+          c.defeated
+            ? 'bg-slate-950/50 border-slate-800/60 opacity-45 cursor-not-allowed'
+            : hasKing
+              ? 'bg-amber-950/35 border-amber-400/90 hover:border-amber-300 cursor-pointer'
+              : isSelected
+                ? 'bg-emerald-950/70 border-emerald-400 ring-2 ring-emerald-400/40 cursor-pointer'
+                : 'bg-slate-900/90 border-slate-700 hover:border-emerald-400/70 cursor-pointer'
+        } ${isSelected && hasKing ? 'ring-2 ring-amber-300' : ''}`;
+        btn.innerHTML = `
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs font-extrabold text-white">Cụm ${idx + 1}</span>
+            <span class="text-[11px] font-bold ${c.defeated ? 'text-slate-500' : 'text-emerald-300'}">
+              ${c.defeated ? 'Đã mất' : c.cards.length + ' lá'}
+            </span>
+          </div>
+          ${hasKing ? `
+            <div class="my-1.5 px-2 py-0.5 rounded-md bg-amber-400/20 border border-amber-400/60 text-amber-300 text-[11px] font-black inline-block w-fit">
+              🔔 BÁO TRƯỚC: SỐ 0
+            </div>
+          ` : ''}
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-[11px] font-bold ${hasKing ? 'text-amber-300' : 'text-slate-400'}">
+              ${c.defeated ? '—' : (hasKing ? 'Cụm giữ số 0' : 'Quân thường')}
+            </span>
+            <span class="text-[11px] font-extrabold text-emerald-300">${isSelected ? '✓ Đã chọn' : ''}</span>
+          </div>
+        `;
+        playerGrid.appendChild(btn);
+      });
+    }
+
+    function updateClashSelectButton() {
+      const btn = document.getElementById('btn-confirm-clash');
+      btn.disabled = !(selectedP1ClusterIdx !== null && selectedP2ClusterIdx !== null);
+    }
+
+    function confirmClusterClash() {
+      if (selectedP1ClusterIdx === null || selectedP2ClusterIdx === null) return;
+      beginClusterClash(selectedP1ClusterIdx, selectedP2ClusterIdx);
+    }
+
+    function beginClusterClash(p1Idx, p2Idx) {
+      if (botTimerId) {
+        clearTimeout(botTimerId);
+        botTimerId = null;
+      }
+
+      const p1Cluster = p1Clusters[p1Idx];
+      const p2Cluster = p2Clusters[p2Idx];
+      const p1HasKing = p1Cluster.cards.some(c => c.isKing);
+      const p2HasKing = p2Cluster.cards.some(c => c.isKing);
+
+      clashState = {
+        p1Idx,
+        p2Idx,
+        p1Hand: [...p1Cluster.cards],
+        p2Hand: [...p2Cluster.cards],
+        p1HasKing,
+        p2HasKing,
+        tableCard: null,
+        tableOwnerSide: null,
+        turnSide: attackerSide
+      };
+      selectedHandCardIds = [];
+
+      document.getElementById('subview-cluster-select').classList.add('hidden');
+      document.getElementById('subview-clash-combat').classList.remove('hidden');
+      document.getElementById('clash-matchup-title').textContent = `Cụm ${p1Idx + 1} (Bên 1) vs Cụm ${p2Idx + 1} (Bên 2)`;
+
+      const anyKing = p1HasKing || p2HasKing;
+      document.getElementById('clash-king-alert').classList.toggle('hidden', !anyKing);
+      document.getElementById('clash-arena-panel').classList.toggle('king-red-alert', anyKing);
+      document.getElementById('bot-king-shield-badge').classList.toggle('hidden', !p2HasKing);
+      document.getElementById('player-king-status-note').classList.toggle('hidden', !p1HasKing);
+
+      if (anyKing) {
+        sfxKingAlert();
+        appendBattleLog(`👑 MÀN QUYẾT ĐỊNH! Lá số 0 đã hiện ở Cụm ${p1Idx + 1} vs Cụm ${p2Idx + 1}!`);
+      } else {
+        appendBattleLog(`Giao tranh Cụm ${p1Idx + 1} vs Cụm ${p2Idx + 1}!`);
+      }
+
+      renderClashArena();
+      start15SecondTurnTimer();
+    }
+
+    function start15SecondTurnTimer() {
+      clearTurnTimer();
+      if (matchEndedFlag || !clashState) return;
+
+      turnTimeLeft = TURN_TIME_LIMIT;
+      updateTurnTimerUI();
+
+      turnIntervalId = setInterval(() => {
+        if (matchEndedFlag || !clashState || currentScreen !== 'battle') {
+          clearTurnTimer();
+          return;
+        }
+        turnTimeLeft--;
+        updateTurnTimerUI();
+
+        if (turnTimeLeft > 0 && turnTimeLeft <= 4) {
+          playTone(740, 0.07, 'sine', 0.08);
+        }
+
+        if (turnTimeLeft <= 0) {
+          clearTurnTimer();
+          handleTurnTimeout(clashState.turnSide);
+        }
+      }, 1000);
+    }
+
+    function clearTurnTimer() {
+      if (turnIntervalId) {
+        clearInterval(turnIntervalId);
+        turnIntervalId = null;
+      }
+    }
+
+    function updateTurnTimerUI() {
+      const labelEl = document.getElementById('turn-timer-label');
+      const barEl = document.getElementById('turn-timer-bar');
+      const badgeEl = document.getElementById('turn-timer-badge');
+      if (!labelEl || !barEl || !badgeEl) return;
+
+      const sideLabel = clashState ? getSideName(clashState.turnSide) : '';
+      labelEl.textContent = `${sideLabel}: ${turnTimeLeft}s`;
+      const pct = Math.max(0, Math.min(100, (turnTimeLeft / TURN_TIME_LIMIT) * 100));
+      barEl.style.width = `${pct}%`;
+
+      const urgent = turnTimeLeft <= 5;
+      barEl.classList.toggle('bg-rose-500', urgent);
+      barEl.classList.toggle('bg-emerald-400', !urgent);
+      badgeEl.classList.toggle('border-rose-500', urgent);
+      badgeEl.classList.toggle('text-rose-200', urgent);
+    }
+
+    function handleTurnTimeout(timedOutSide) {
+      if (matchEndedFlag) return;
+      sfxLose();
+      const loserName = getSideName(timedOutSide);
+      const winnerSide = timedOutSide === 'p1' ? 'p2' : 'p1';
+      const winnerName = getSideName(winnerSide);
+      finalizeWholeMatch(
+        winnerSide,
+        `${loserName} hết 15 giây suy nghĩ mà không đánh bài! ${winnerName} thắng nguyên trận!`,
+        false
+      );
+    }
+
+    function getViewerSideInClash() {
+      if (gameMode === 'ai') return 'p1';
+      return clashState.turnSide;
+    }
+
+    function renderClashArena() {
+      if (!clashState) return;
+      const viewerSide = getViewerSideInClash();
+      const oppSide = viewerSide === 'p1' ? 'p2' : 'p1';
+
+      const viewerHand = viewerSide === 'p1' ? clashState.p1Hand : clashState.p2Hand;
+      const oppHand = oppSide === 'p1' ? clashState.p1Hand : clashState.p2Hand;
+
+      document.getElementById('clash-top-label').textContent = `Cụm của ${getSideName(oppSide)}`;
+      document.getElementById('clash-bottom-label').textContent = `Bài trên tay của ${getSideName(viewerSide)}`;
+      document.getElementById('bot-clash-remaining').textContent = `${oppHand.length}`;
+      document.getElementById('player-clash-remaining').textContent = `${viewerHand.length} lá`;
+
+      const oppVis = document.getElementById('bot-clash-cards-visual');
+      oppVis.innerHTML = '';
+      const oppHasKing = oppSide === 'p1' ? clashState.p1HasKing : clashState.p2HasKing;
+      if (oppHasKing) {
+        oppVis.insertAdjacentHTML('beforeend', renderMiniCard({ label: '0', power: 0, isKing: true }, 'scale-75 origin-left'));
+      }
+      const hiddenOppCount = Math.min(oppHand.filter(c => !c.isKing).length, 8);
+      for (let i = 0; i < hiddenOppCount; i++) {
+        oppVis.insertAdjacentHTML('beforeend', `<div class="w-7 h-10 rounded-lg border border-slate-700 card-back shadow"></div>`);
+      }
+
+      const banner = document.getElementById('table-turn-banner');
+      const tableCardsEl = document.getElementById('table-played-cards');
+      const comboLabel = document.getElementById('table-combo-label');
+      const isHumanTurn = (gameMode === 'pvp') || (clashState.turnSide === 'p1');
+
+      if (!clashState.tableCard) {
+        banner.textContent = isHumanTurn
+          ? `Lượt của ${getSideName(clashState.turnSide)} — Đánh 1 lá mở đầu (15s)`
+          : `Lượt của Bên 2 (Máy) đang suy nghĩ (15s)...`;
+        tableCardsEl.innerHTML = `<span class="text-xs sm:text-sm text-slate-400 italic">Bàn đang trống. Đánh 1 lá (không phải Lá 0) để mở vòng!</span>`;
+        comboLabel.textContent = '';
+      } else {
+        banner.textContent = isHumanTurn
+          ? `Lượt của ${getSideName(clashState.turnSide)} — Đánh 1 lá LỰC > ${clashState.tableCard.power} để lấy lá này về!`
+          : `Bên 2 (Máy) đang cân nhắc nước đánh 1 lá (15s)...`;
+        tableCardsEl.innerHTML = renderMiniCard(clashState.tableCard, 'scale-105 ring-2 ring-emerald-400/60');
+        comboLabel.textContent = `Lá trên bàn: [${clashState.tableCard.label}] (Lực ${clashState.tableCard.power}) do ${getSideName(clashState.tableOwnerSide)} đánh`;
+      }
+
+      const handEl = document.getElementById('player-clash-hand');
+      handEl.innerHTML = '';
+
+      const sortedHand = [...viewerHand].sort((a, b) => a.power - b.power);
+      sortedHand.forEach(card => {
+        const isSelected = selectedHandCardIds.includes(card.uid);
+        const tier = getCardTierClass(card);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.disabled = !isHumanTurn;
+        btn.onclick = () => toggleSelectHandCard(card.uid);
+        btn.className = `game-card w-14 h-20 sm:w-16 sm:h-24 rounded-xl border ${tier} flex flex-col items-center justify-between p-1.5 shadow-md cursor-pointer disabled:cursor-not-allowed ${
+          isSelected ? 'selected' : ''
+        }`;
+        btn.innerHTML = `
+          <span class="text-[10px] font-bold opacity-75 self-start leading-none">${card.isKing ? '👑' : '•'}</span>
+          <span class="text-xl sm:text-2xl font-black leading-none">${card.label}</span>
+          <span class="text-[10px] font-semibold opacity-70 leading-none">${card.isKing ? 'SỐ 0' : 'LỰC ' + card.power}</span>
+        `;
+        handEl.appendChild(btn);
+      });
+
+      const playBtn = document.getElementById('btn-play-cards');
+      const passBtn = document.getElementById('btn-pass-turn');
+      const hintBtn = document.getElementById('btn-hint-move');
+
+      playBtn.disabled = !isHumanTurn || selectedHandCardIds.length !== 1;
+      passBtn.disabled = !isHumanTurn || !clashState.tableCard;
+      hintBtn.disabled = !isHumanTurn;
+
+      if (gameMode === 'ai' && clashState.turnSide === 'p2') {
+        scheduleBotCombatAction();
+      }
+    }
+
+    function toggleSelectHandCard(uid) {
+      if (!clashState) return;
+      const isHumanTurn = (gameMode === 'pvp') || (clashState.turnSide === 'p1');
+      if (!isHumanTurn) return;
+
+      if (selectedHandCardIds.includes(uid)) {
+        selectedHandCardIds = [];
+      } else {
+        selectedHandCardIds = [uid];
+      }
+      sfxCardPlay(false);
+      renderClashArena();
+    }
+
+    function clearClashSelection() {
+      selectedHandCardIds = [];
+      renderClashArena();
+    }
+
+    function playerUseHint() {
+      if (!clashState) return;
+      const viewerSide = getViewerSideInClash();
+      const hand = viewerSide === 'p1' ? clashState.p1Hand : clashState.p2Hand;
+      const moves = getLegalSingleMoves(hand, clashState.tableCard);
+      if (moves.length > 0) {
+        selectedHandCardIds = [moves[0].uid];
+        sfxCardPlay(false);
+        renderClashArena();
+        showToast(`Gợi ý: đánh 1 lá [${moves[0].label}] (Lực ${moves[0].power}).`, 'info');
+      } else {
+        showToast('Không có lá nào đủ mạnh để đè — hãy bấm Bỏ lượt!', 'warn');
+      }
+    }
+
+    function playerPlaySelected() {
+      if (!clashState || selectedHandCardIds.length !== 1) return;
+      const side = clashState.turnSide;
+      const hand = side === 'p1' ? clashState.p1Hand : clashState.p2Hand;
+      const card = hand.find(c => c.uid === selectedHandCardIds[0]);
+
+      if (!card) return;
+      if (card.isKing) {
+        showToast('Không thể dùng Lá số 0 để đánh ra bàn!', 'danger');
+        return;
+      }
+      if (!canSingleCardBeat(card, clashState.tableCard)) {
+        showToast(`Lá [${card.label}] (Lực ${card.power}) không đè được lá trên bàn!`, 'warn');
+        return;
+      }
+
+      selectedHandCardIds = [];
+      executeSingleCardPlay(side, card);
+    }
+
+    function playerPassTurn() {
+      if (!clashState || !clashState.tableCard) return;
+      const passer = clashState.turnSide;
+      const nextStarter = clashState.tableOwnerSide || (passer === 'p1' ? 'p2' : 'p1');
+      sfxPass();
+      appendBattleLog(`${getSideName(passer)} bỏ lượt — ${getSideName(nextStarter)} mở vòng mới.`);
+      clashState.tableCard = null;
+      clashState.tableOwnerSide = null;
+      clashState.turnSide = nextStarter;
+
+      renderClashArena();
+      start15SecondTurnTimer();
+    }
+
+    function scheduleBotCombatAction() {
+      if (botTimerId) clearTimeout(botTimerId);
+      botTimerId = setTimeout(() => {
+        if (matchEndedFlag || currentScreen !== 'battle' || !clashState || clashState.turnSide !== 'p2') return;
+        const legal = getLegalSingleMoves(clashState.p2Hand, clashState.tableCard);
+        if (legal.length === 0) {
+          if (clashState.tableCard) {
+            playerPassTurn();
+          } else {
+            resolveClusterClash('p1');
+          }
+          return;
+        }
+
+        let chosen = legal[0];
+        if (aiDifficulty === 'easy') {
+          chosen = legal[Math.floor(Math.random() * legal.length)];
+        }
+        executeSingleCardPlay('p2', chosen);
+      }, 900);
+    }
+
+    function executeSingleCardPlay(side, card) {
+      if (!clashState || matchEndedFlag) return;
+      clearTurnTimer();
+
+      const hand = side === 'p1' ? clashState.p1Hand : clashState.p2Hand;
+      const idx = hand.findIndex(c => c.uid === card.uid);
+      if (idx !== -1) hand.splice(idx, 1);
+
+      if (clashState.tableCard && clashState.tableOwnerSide && clashState.tableOwnerSide !== side && !clashState.tableCard.isKing) {
+        const taken = clashState.tableCard;
+        takeCardToSidePoolImmediately(side, taken);
+        appendBattleLog(`${getSideName(side)} dùng [${card.label}] đè và LẤY NGAY [${taken.label}] về kho!`);
+      } else {
+        appendBattleLog(`${getSideName(side)} đánh 1 lá [${card.label}] (Lực ${card.power}).`);
+      }
+
+      clashState.tableCard = card;
+      clashState.tableOwnerSide = side;
+      sfxCardPlay(card.power >= 13);
+
+      if (hasOnlyKingLeft(hand)) {
+        resolveClusterClash(side);
+        return;
+      }
+
+      clashState.turnSide = side === 'p1' ? 'p2' : 'p1';
+      renderClashArena();
+      start15SecondTurnTimer();
+    }
+
+    function resolveClusterClash(clashWinnerSide) {
+      if (!clashState || matchEndedFlag) return;
+      clearTurnTimer();
+      if (botTimerId) {
+        clearTimeout(botTimerId);
+        botTimerId = null;
+      }
+
+      const loserSide = clashWinnerSide === 'p1' ? 'p2' : 'p1';
+      const p1Cluster = p1Clusters[clashState.p1Idx];
+      const p2Cluster = p2Clusters[clashState.p2Idx];
+
+      const loserRemainingCards = clashWinnerSide === 'p1' ? clashState.p2Hand : clashState.p1Hand;
+      for (const rc of loserRemainingCards) {
+        if (!rc.isKing) {
+          takeCardToSidePoolImmediately(clashWinnerSide, rc);
+        }
+      }
+
+      p1Cluster.defeated = true;
+      p2Cluster.defeated = true;
+
+      const winnerHasKing = clashWinnerSide === 'p1' ? clashState.p1HasKing : clashState.p2HasKing;
+      const loserHasKing = loserSide === 'p1' ? clashState.p1HasKing : clashState.p2HasKing;
+
+      if (winnerHasKing) {
+        finalizeWholeMatch(
+          clashWinnerSide,
+          `Màn quyết định có Lá số 0: ${getSideName(clashWinnerSide)} thắng cụm và THẮNG NGUYÊN TRẬN!`,
+          loserHasKing
+        );
+        return;
+      }
+
+      if (loserHasKing) {
+        finalizeWholeMatch(
+          clashWinnerSide,
+          `Màn quyết định có Lá số 0: ${getSideName(loserSide)} để thua cụm — THUA NGUYÊN TRẬN!`,
+          true
+        );
+        return;
+      }
+
+      if (clashWinnerSide === 'p1') {
+        attackerSide = 'p1';
+        appendBattleLog(`Bên 1 thắng cụm và giữ quyền công.`);
+      } else {
+        attackerSide = 'p2';
+        const p1AliveIndices = p1Clusters
+          .map((c, idx) => (!c.defeated ? idx : -1))
+          .filter(idx => idx !== -1);
+
+        if (p1AliveIndices.length > 0) {
+          const seizedIdx = p1AliveIndices[Math.floor(Math.random() * p1AliveIndices.length)];
+          const seizedCluster = p1Clusters[seizedIdx];
+          const seizedKing = seizedCluster.cards.some(c => c.isKing);
+          seizedCluster.defeated = true;
+
+          for (const sc of seizedCluster.cards) {
+            if (!sc.isKing) takeCardToSidePoolImmediately('p2', sc);
+          }
+
+          appendBattleLog(`Bên 2 bắt ngẫu nhiên Cụm ${seizedIdx + 1} của Bên 1!`);
+
+          if (seizedKing) {
+            finalizeWholeMatch(
+              'p2',
+              `Bên 2 bắt ngẫu nhiên trúng Cụm ${seizedIdx + 1} có Lá số 0 của Bên 1 — Bên 2 thắng nguyên trận!`,
+              true
+            );
+            return;
+          }
+        }
+      }
+
+      roundNumber++;
+      renderScoreboard();
+      showClusterSelectionSubView();
+    }
+
+    function concludeMatchByLoot(reasonPrefix) {
+      if (matchEndedFlag) return;
+      if (p1Loot > p2Loot) {
+        finalizeWholeMatch('p1', `${reasonPrefix} Bên 1 lấy được nhiều quân hơn (${p1Loot} vs ${p2Loot} lá) — Thắng nguyên trận!`, false);
+      } else if (p2Loot > p1Loot) {
+        finalizeWholeMatch('p2', `${reasonPrefix} Bên 2 lấy được nhiều quân hơn (${p2Loot} vs ${p1Loot} lá) — Thắng nguyên trận!`, false);
+      } else {
+        finalizeWholeMatch('p1', `${reasonPrefix} Hòa số quân đã lấy (${p1Loot} lá) — Bên 1 thắng phá thế hòa!`, false);
+      }
+    }
+
+    function finalizeWholeMatch(winnerSide, reasonText, kingSlainByWinner) {
+      if (matchEndedFlag) return;
+      matchEndedFlag = true;
+      clearTurnTimer();
+      if (botTimerId) {
+        clearTimeout(botTimerId);
+        botTimerId = null;
+      }
+
+      if (gameMode === 'ai') {
+        if (winnerSide === 'p1') {
+          stats.wins += 1;
+          stats.winStreak += 1;
+          if (kingSlainByWinner) stats.kingsSlain += 1;
+          sfxWin();
+        } else {
+          stats.losses += 1;
+          stats.winStreak = 0;
+          if (kingSlainByWinner) stats.kingsSlain += 1;
+          sfxLose();
+        }
+        saveStats();
+      } else {
+        if (winnerSide === 'p1') sfxWin();
+        else sfxLose();
+      }
+
+      document.getElementById('endgame-icon').textContent = winnerSide === 'p1' ? '🏆' : '👑';
+      document.getElementById('endgame-title').textContent =
+        gameMode === 'pvp'
+          ? `${getSideName(winnerSide)} Thắng Nguyên Trận!`
+          : (winnerSide === 'p1' ? 'Bạn Thắng Nguyên Trận!' : 'Bên 2 Thắng Nguyên Trận!');
+      document.getElementById('endgame-reason').textContent = reasonText;
+
+      document.getElementById('endgame-kept-banner').textContent =
+        `📥 Ăn cái nào lấy về cái đó: Kho giữ của Bạn hiện có ${keptCardsPool.length} quân • Kho giữ của Máy hiện có ${botKeptCardsPool.length} quân.`;
+
+      document.getElementById('end-p1-label').textContent = 'Quân đã lấy của Bên 1';
+      document.getElementById('end-p2-label').textContent = gameMode === 'pvp' ? 'Quân đã lấy của Bên 2' : 'Quân đã lấy của Bên 2 (Máy)';
+      document.getElementById('end-p1-loot').textContent = `${p1Loot} lá`;
+      document.getElementById('end-p2-loot').textContent = `${p2Loot} lá`;
+
+      const modal = document.getElementById('endgame-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeEndgameAndRestart() {
+      const modal = document.getElementById('endgame-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      restartCurrentMode();
+    }
+
+    function closeEndgameToMenu() {
+      const modal = document.getElementById('endgame-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      returnToMainMenu();
+    }
+
+    renderStatsDashboard();
+  </script>
+</body>
+</html>
